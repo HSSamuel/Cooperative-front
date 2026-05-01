@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -29,6 +29,8 @@ export default function DashboardLayout({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Profile Edit Form State
   const [editForm, setEditForm] = useState({
@@ -108,12 +110,55 @@ export default function DashboardLayout({
     }
   };
 
-  const handleAvatarUpload = () => {
-    // In Phase 2, this opens a file picker and uploads to Cloudinary/S3
-    toast(
-      "Image upload requires a cloud storage bucket. (Coming in Phase 2!)",
-      { icon: "📸" },
-    );
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click(); // Triggers the hidden file input
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const token = localStorage.getItem("coop_token");
+
+      // 1. Upload the image to Cloudinary via our new backend route
+      const uploadRes = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      const newAvatarUrl = uploadRes.data.url;
+
+      // 2. Automatically update the user's profile with the new URL
+      const profileRes = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
+        { ...editForm, avatarUrl: newAvatarUrl },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      localStorage.setItem("coop_user", JSON.stringify(profileRes.data));
+      setUser(profileRes.data);
+      toast.success("Profile picture updated!");
+    } catch (error: any) {
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const navItems = [
@@ -430,11 +475,42 @@ export default function DashboardLayout({
           {/* Interactive Avatar Upload */}
           <div className="absolute -bottom-10 left-6 relative group">
             <div className="w-24 h-24 bg-white rounded-full p-1 shadow-xl">
+              {/* HIDDEN FILE INPUT */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+
               <button
-                onClick={handleAvatarUpload}
+                onClick={handleAvatarClick}
+                disabled={isUploadingImage}
                 className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center text-4xl font-bold text-white relative overflow-hidden focus:outline-none"
               >
-                {user.avatarUrl ? (
+                {isUploadingImage ? (
+                  <svg
+                    className="animate-spin h-8 w-8 text-emerald-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : user.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
                     alt="Avatar"
