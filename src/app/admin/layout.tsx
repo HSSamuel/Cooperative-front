@@ -53,18 +53,18 @@ export default function AdminLayout({
     },
     {
       name: "HR Reports",
-      href: "/admin/reports", // <-- Updated from "#"
+      href: "/admin/reports",
       icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
     },
     {
       name: "System Settings",
-      href: "/admin/settings", // <-- Updated from "#"
+      href: "/admin/settings",
       icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 flex overflow-hidden">
       {/* MOBILE BACKDROP */}
       {isSidebarOpen && (
         <div
@@ -73,15 +73,15 @@ export default function AdminLayout({
         />
       )}
 
-      {/* ADMIN SIDEBAR */}
+      {/* ADMIN SIDEBAR (Push Sidebar Architecture) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0f3420] text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col border-r border-[#1b5e3a] ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 bg-[#0f3420] text-white flex flex-col border-r border-[#1b5e3a] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
+          w-72 lg:w-20 lg:hover:w-72 lg:sticky lg:top-0 lg:h-screen
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        <div className="h-20 flex items-center px-6 border-b border-[#1b5e3a]">
-          <Link href="/admin" className="flex items-center gap-3">
-            <div className="bg-white p-1.5 rounded-lg">
+        <div className="h-20 flex items-center px-5 border-b border-[#1b5e3a] flex-shrink-0">
+          <Link href="/admin" className="flex items-center gap-4 w-full">
+            <div className="bg-white p-1.5 rounded-lg flex-shrink-0">
               <Image
                 src="/ascon-logo.png"
                 alt="ASCON Logo"
@@ -90,7 +90,7 @@ export default function AdminLayout({
                 className="object-contain"
               />
             </div>
-            <div>
+            <div className="whitespace-nowrap transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100">
               <span className="font-bold text-lg tracking-tight text-white block leading-tight">
                 ASCON<span className="text-emerald-400">Admin</span>
               </span>
@@ -101,7 +101,7 @@ export default function AdminLayout({
           </Link>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -109,14 +109,16 @@ export default function AdminLayout({
                 key={item.name}
                 href={item.href}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group ${
+                className={`flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 ${
                   isActive
                     ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/50 font-bold"
                     : "text-emerald-100/70 hover:bg-[#1b5e3a] hover:text-white font-medium"
                 }`}
               >
                 <svg
-                  className={`w-5 h-5 transition-colors ${isActive ? "text-white" : "text-emerald-400/50 group-hover:text-emerald-300"}`}
+                  className={`w-6 h-6 flex-shrink-0 transition-colors ${
+                    isActive ? "text-white" : "text-emerald-400/50"
+                  }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -128,20 +130,22 @@ export default function AdminLayout({
                     d={item.icon}
                   />
                 </svg>
-                {item.name}
+                <span className="whitespace-nowrap transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:delay-100">
+                  {item.name}
+                </span>
               </Link>
             );
           })}
         </nav>
 
         {/* BOTTOM ACTION: EXIT TO COOP DASHBOARD */}
-        <div className="p-4 border-t border-[#1b5e3a] bg-[#0a2416]">
+        <div className="p-4 border-t border-[#1b5e3a] bg-[#0a2416] flex-shrink-0">
           <button
             onClick={handleExitConsole}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#1b5e3a] hover:bg-emerald-600 text-white font-bold transition-colors shadow-inner border border-emerald-700/50"
+            className="flex items-center justify-start gap-4 w-full px-3 py-3 rounded-xl bg-[#1b5e3a] hover:bg-emerald-600 text-white font-bold transition-colors shadow-inner border border-emerald-700/50 overflow-hidden"
           >
             <svg
-              className="w-5 h-5"
+              className="w-6 h-6 flex-shrink-0 text-emerald-200"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -153,15 +157,17 @@ export default function AdminLayout({
                 d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
               />
             </svg>
-            Exit to Coop View
+            <span className="whitespace-nowrap transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:delay-100">
+              Exit to Coop View
+            </span>
           </button>
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-72 transition-all duration-300">
+      {/* MAIN CONTENT AREA - Now it flexes alongside the sticky sidebar */}
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 h-screen overflow-y-auto">
         {/* FROSTED GLASS HEADER */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 h-20 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 h-20 flex-shrink-0 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -186,7 +192,9 @@ export default function AdminLayout({
                 ? "Command Center"
                 : pathname.includes("members")
                   ? "Member Directory"
-                  : "Admin"}
+                  : pathname.includes("settings")
+                    ? "System Architecture"
+                    : "Admin"}
             </h1>
           </div>
 

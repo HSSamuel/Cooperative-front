@@ -18,8 +18,17 @@ export default function MemberDirectoryPage() {
   // Specific User Financial State
   const [memberAccount, setMemberAccount] = useState<any>(null);
   const [isAccountLoading, setIsAccountLoading] = useState(false);
+
+  // Manual Adjustment State
   const [adjustAmount, setAdjustAmount] = useState("");
   const [isAdjusting, setIsAdjusting] = useState(false);
+
+  // 🚀 NEW: Automated Engine Settings State
+  const [settingsForm, setSettingsForm] = useState({
+    status: "ACTIVE",
+    customMonthlySavings: "",
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   useEffect(() => {
     fetchMembers();
@@ -37,9 +46,7 @@ export default function MemberDirectoryPage() {
       const token = localStorage.getItem("coop_token");
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/all-members`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setMembers(res.data);
     } catch (error) {
@@ -55,11 +62,17 @@ export default function MemberDirectoryPage() {
       const token = localStorage.getItem("coop_token");
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/account/user/${cooperatorId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setMemberAccount(res.data);
+
+      // Pre-fill the settings form with their current database settings
+      setSettingsForm({
+        status: res.data?.status || "ACTIVE",
+        customMonthlySavings: res.data?.customMonthlySavings
+          ? (res.data.customMonthlySavings / 100).toString()
+          : "0",
+      });
     } catch (error) {
       toast.error("Failed to load user financials.");
     } finally {
@@ -95,12 +108,38 @@ export default function MemberDirectoryPage() {
       );
 
       toast.success(res.data.message);
-      setMemberAccount(res.data.account); // Instantly update UI with new balance
-      setAdjustAmount(""); // Clear input
+      setMemberAccount(res.data.account);
+      setAdjustAmount("");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Adjustment failed.");
     } finally {
       setIsAdjusting(false);
+    }
+  };
+
+  // 🚀 NEW: Save automated engine settings
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      const token = localStorage.getItem("coop_token");
+      const savingsInKobo = parseInt(settingsForm.customMonthlySavings) * 100;
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/account/user/${selectedMember._id}/settings`,
+        {
+          status: settingsForm.status,
+          customMonthlySavings: isNaN(savingsInKobo) ? 0 : savingsInKobo,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      toast.success("Account settings updated!");
+      setMemberAccount(res.data.account);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to save settings.");
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -217,10 +256,18 @@ export default function MemberDirectoryPage() {
           <table className="w-full text-left border-collapse cursor-pointer">
             <thead>
               <tr className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                <th className="px-6 py-4 font-bold">Profile</th>
-                <th className="px-6 py-4 font-bold">File Number</th>
-                <th className="px-6 py-4 font-bold">System Role</th>
-                <th className="px-6 py-4 font-bold">Joined Date</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">
+                  Profile
+                </th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">
+                  File Number
+                </th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">
+                  System Role
+                </th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">
+                  Joined Date
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -242,8 +289,16 @@ export default function MemberDirectoryPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0 group-hover:scale-105 transition-transform">
-                          {member.lastName?.charAt(0) || "U"}
+                        <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                          {member.avatarUrl ? (
+                            <img
+                              src={member.avatarUrl}
+                              alt="Avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            member.lastName?.charAt(0) || "U"
+                          )}
                         </div>
                         <div>
                           <div className="font-bold text-slate-800">
@@ -255,7 +310,7 @@ export default function MemberDirectoryPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-slate-600">
+                    <td className="px-6 py-4 font-medium text-slate-600 whitespace-nowrap">
                       {member.fileNumber}
                     </td>
                     <td className="px-6 py-4">
@@ -311,8 +366,16 @@ export default function MemberDirectoryPage() {
                 </svg>
               </button>
               <div className="absolute -bottom-10 left-6 w-20 h-20 bg-white rounded-2xl p-1 shadow-lg">
-                <div className="w-full h-full bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold text-white">
-                  {selectedMember.lastName?.charAt(0)}
+                <div className="w-full h-full bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold text-white overflow-hidden">
+                  {selectedMember.avatarUrl ? (
+                    <img
+                      src={selectedMember.avatarUrl}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    selectedMember.lastName?.charAt(0)
+                  )}
                 </div>
               </div>
             </div>
@@ -435,14 +498,83 @@ export default function MemberDirectoryPage() {
                         </div>
                       </div>
 
+                      {/* 🚀 NEW: Automated Engine Settings */}
+                      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-800 mb-1">
+                          Reconciliation Settings
+                        </h3>
+                        <p className="text-xs text-slate-500 mb-4">
+                          Control how the payroll engine processes this account.
+                        </p>
+
+                        <form
+                          onSubmit={handleSaveSettings}
+                          className="space-y-4"
+                        >
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Account Status
+                            </label>
+                            <select
+                              value={settingsForm.status}
+                              onChange={(e) =>
+                                setSettingsForm({
+                                  ...settingsForm,
+                                  status: e.target.value,
+                                })
+                              }
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            >
+                              <option value="ACTIVE">
+                                Active (Process Deductions)
+                              </option>
+                              <option value="PAUSED">
+                                Paused (Skip Deductions)
+                              </option>
+                              <option value="INACTIVE">
+                                Inactive (Suspended/Retired)
+                              </option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Custom Monthly Savings (NGN)
+                            </label>
+                            <input
+                              type="number"
+                              value={settingsForm.customMonthlySavings}
+                              onChange={(e) =>
+                                setSettingsForm({
+                                  ...settingsForm,
+                                  customMonthlySavings: e.target.value,
+                                })
+                              }
+                              placeholder="Leave as 0 for Standard"
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              Enter 0 to use the global ASCON rate.
+                            </p>
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={isSavingSettings}
+                            className="w-full bg-[#1b5e3a] hover:bg-[#124228] text-white text-xs font-bold py-2.5 rounded-lg shadow-md transition-colors disabled:opacity-70"
+                          >
+                            {isSavingSettings
+                              ? "Saving..."
+                              : "Save Engine Settings"}
+                          </button>
+                        </form>
+                      </div>
+
                       {/* Manual Adjustment Form */}
                       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
                         <h3 className="text-sm font-bold text-slate-800 mb-1">
                           Manual Adjustment
                         </h3>
                         <p className="text-xs text-slate-500 mb-4">
-                          Add or subtract funds manually (e.g. for physical cash
-                          deposits or accounting corrections).
+                          Add or subtract funds manually (e.g., cash deposits).
                         </p>
 
                         <div className="space-y-4">
@@ -461,7 +593,6 @@ export default function MemberDirectoryPage() {
                               className="w-full pl-8 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             />
                           </div>
-
                           <div className="grid grid-cols-2 gap-3">
                             <button
                               onClick={() => handleAdminAdjustment("CREDIT")}

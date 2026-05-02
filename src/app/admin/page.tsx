@@ -6,6 +6,10 @@ import toast from "react-hot-toast";
 
 export default function AdminOverviewPage() {
   const [loans, setLoans] = useState<any[]>([]);
+  const [globalStats, setGlobalStats] = useState({
+    totalCooperativeSavings: 0,
+    activeMembersCount: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -17,21 +21,28 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("coop_token");
-    if (token) fetchLoans(token);
+    if (token) {
+      fetchData(token);
+    }
   }, []);
 
-  const fetchLoans = async (token: string) => {
+  const fetchData = async (token: string) => {
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/all`,
-        {
+      // Fetch both loans and global stats simultaneously
+      const [loansRes, statsRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/all`, {
           headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      setLoans(res.data);
+        }),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/account/global-stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      setLoans(loansRes.data);
+      setGlobalStats(statsRes.data);
     } catch (error) {
-      console.error("Fetch Loans Error:", error);
-      toast.error("Failed to load cooperative data.");
+      console.error("Fetch Data Error:", error);
+      toast.error("Failed to load cooperative dashboard data.");
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +69,7 @@ export default function AdminOverviewPage() {
       );
 
       toast.success(`Loan successfully ${status.toLowerCase()}`);
-      fetchLoans(token!);
+      fetchData(token!);
     } catch (error: any) {
       toast.error(
         error.response?.data?.message || "Failed to update loan status.",
@@ -118,15 +129,24 @@ export default function AdminOverviewPage() {
     }
   };
 
+  // --- CALCULATION LOGIC ---
   const pendingReviewsCount = loans.filter(
     (l) => l.status === "PENDING_ADMIN",
   ).length;
+
   const activeLoansValue = loans
     .filter((l) => l.status === "APPROVED")
     .reduce(
       (acc, l) => acc + ((l.amountDue || l.amountRequested) - l.amountRepaid),
       0,
     );
+
+  // 🚀 NEW: Estimated Liquidity (Total Savings - Money Out on Active Loans)
+  // Note: This is a simplified estimation. A real bank would track cash-at-hand vs assets.
+  const estimatedLiquidity = Math.max(
+    0,
+    globalStats.totalCooperativeSavings - activeLoansValue,
+  );
 
   const searchedLoans = loans.filter((loan) => {
     const term = searchQuery.toLowerCase();
@@ -173,97 +193,127 @@ export default function AdminOverviewPage() {
   }
 
   return (
-    <div className="animate-fade-in-up">
-      {/* THE POWER ROW */}
+    <div className="animate-fade-in-up pb-10">
+      {/* ========================================== */}
+      {/* ROW 1: COOPERATIVE HEALTH (NEW)            */}
+      {/* ========================================== */}
+      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+        Cooperative Health Overview
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Action Required
+        {/* Total Pooled Savings */}
+        <div className="bg-[#0f3420] rounded-3xl p-6 shadow-xl shadow-emerald-900/10 text-white relative overflow-hidden group">
+          <div className="absolute -right-12 -top-12 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-emerald-200/70 uppercase tracking-wider mb-2">
+              Total Pooled Savings
             </p>
-            <span className="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </span>
+            <h2 className="text-3xl font-extrabold tabular-nums tracking-tight">
+              {formatNaira(globalStats.totalCooperativeSavings)}
+            </h2>
+            <p className="text-[10px] text-emerald-100/60 mt-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              {globalStats.activeMembersCount} Active Contributing Members
+            </p>
           </div>
-          <h2 className="text-4xl font-extrabold text-slate-800 tabular-nums">
-            {pendingReviewsCount}
+        </div>
+
+        {/* Estimated Liquidity */}
+        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Estimated Liquidity
+          </p>
+          <h2 className="text-3xl font-extrabold text-slate-800 tabular-nums tracking-tight">
+            {formatNaira(estimatedLiquidity)}
           </h2>
-          <p className="text-xs font-semibold text-amber-500 mt-2 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            Awaiting your approval
+          <p className="text-[10px] text-slate-500 mt-3 font-medium">
+            Approx. funds available for new loans
           </p>
         </div>
 
+        {/* Active Capital in Field */}
         <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Active Capital
-            </p>
-            <span className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                />
-              </svg>
-            </span>
-          </div>
-          <h2 className="text-3xl font-extrabold text-slate-800 tabular-nums">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Active Capital (Field)
+          </p>
+          <h2 className="text-3xl font-extrabold text-[#1b5e3a] tabular-nums tracking-tight">
             {formatNaira(activeLoansValue)}
           </h2>
-          <p className="text-xs font-semibold text-emerald-600 mt-2">
-            Total outstanding funds in the field
+          <p className="text-[10px] text-slate-500 mt-3 font-medium">
+            Total outstanding loan balances
           </p>
         </div>
+      </div>
 
-        {/* HR EXPORT HUB */}
-        <div className="bg-[#0f3420] rounded-3xl p-6 shadow-xl shadow-emerald-900/10 text-white flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 border border-[#1b5e3a]">
-          <div className="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-bold text-emerald-200/70 uppercase tracking-wider">
-                HR Export Hub
+      {/* ========================================== */}
+      {/* ROW 2: ACTION CENTER (EXISTING)            */}
+      {/* ========================================== */}
+      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+        Command Actions
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        {/* Pending Reviews */}
+        <div className="bg-gradient-to-br from-amber-50 to-white rounded-3xl p-6 shadow-xl shadow-amber-100/40 border border-amber-100 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">
+                Action Required
               </p>
             </div>
-            <button
-              onClick={handleDownloadPayroll}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg flex items-center justify-between text-sm mt-3"
-            >
-              Download Payroll CSV
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-            </button>
+            <h2 className="text-4xl font-extrabold text-slate-800 tabular-nums">
+              {pendingReviewsCount}
+            </h2>
+            <p className="text-xs font-semibold text-slate-500 mt-1">
+              Applications awaiting approval
+            </p>
           </div>
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center shadow-inner">
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* HR Export Hub */}
+        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              HR Export Hub
+            </p>
+            <svg
+              className="w-5 h-5 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+              />
+            </svg>
+          </div>
+          <p className="text-sm text-slate-500 mb-4 font-medium">
+            Generate the monthly deduction report for the ASCON Payroll team.
+          </p>
+          <button
+            onClick={handleDownloadPayroll}
+            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md text-sm"
+          >
+            Download Payroll CSV
+          </button>
         </div>
       </div>
 
@@ -353,8 +403,16 @@ export default function AdminOverviewPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-emerald-100 flex-shrink-0">
-                          {loan.cooperatorId?.lastName?.charAt(0) || "U"}
+                        <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-emerald-100 flex-shrink-0 overflow-hidden">
+                          {loan.cooperatorId?.avatarUrl ? (
+                            <img
+                              src={loan.cooperatorId.avatarUrl}
+                              alt="Avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            loan.cooperatorId?.lastName?.charAt(0) || "U"
+                          )}
                         </div>
                         <div>
                           <div className="font-bold text-slate-800">
@@ -388,6 +446,7 @@ export default function AdminOverviewPage() {
                             onClick={() => handleReview(loan._id, "REJECTED")}
                             disabled={processingId === loan._id}
                             className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-xl border border-red-200 transition-all"
+                            title="Reject Loan"
                           >
                             <svg
                               className="w-5 h-5"
@@ -407,6 +466,7 @@ export default function AdminOverviewPage() {
                             onClick={() => handleReview(loan._id, "APPROVED")}
                             disabled={processingId === loan._id}
                             className="p-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md transition-all"
+                            title="Approve Loan"
                           >
                             <svg
                               className="w-5 h-5"

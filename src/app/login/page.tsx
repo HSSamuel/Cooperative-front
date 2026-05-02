@@ -116,12 +116,13 @@ export default function LoginPage() {
                   Password
                 </label>
                 <div className="text-xs sm:text-sm">
-                  <a
-                    href="#"
+                  {/* 🚀 THE FIX: Changed to Next.js Link pointing to /forgot-password */}
+                  <Link
+                    href="/forgot-password"
                     className="font-medium text-[#1b5e3a] hover:text-[#124228] transition"
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
               <div className="relative">

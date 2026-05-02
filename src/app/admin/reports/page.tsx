@@ -245,10 +245,13 @@ export default function HRReportsPage() {
           <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden h-full flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <div>
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  Risk & Default Ledger
-                  <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
-                    Priority Watch
+                <h3 className="font-bold text-slate-800">
+                  {/* Shows on Mobile */}
+                  <span className="sm:hidden">Priority Risk Watch</span>
+
+                  {/* Shows on Desktop/Tablet */}
+                  <span className="hidden sm:inline">
+                    Risk & Default Ledger
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">

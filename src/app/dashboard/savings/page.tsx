@@ -149,7 +149,8 @@ export default function SavingsPage() {
               <h4 className="text-sm font-bold text-slate-800">
                 Did you know?
               </h4>
-              <p className="text-sm text-slate-600 mt-1">
+              {/* 🚀 THE FIX: text-justify added here! */}
+              <p className="text-sm text-slate-600 mt-1 text-justify">
                 Your available credit limit automatically grows as you save. You
                 currently have access to{" "}
                 <span className="font-bold text-[#1b5e3a]">
