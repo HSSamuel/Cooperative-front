@@ -1,14 +1,18 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Home() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#1b5e3a]/20">
       {/* 1. GLASSMORPHISM NAVIGATION */}
       <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Changed h-20 to h-16 for a sleeker, slimmer profile */}
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 relative">
             <div className="flex items-center gap-2 sm:gap-3">
               {/* ASCON Official Logo (Navbar) */}
               <Image
@@ -22,22 +26,83 @@ export default function Home() {
                 ASCON<span className="text-[#1b5e3a]">Coop</span>
               </span>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4">
+
+            {/* Desktop Navigation (Hidden on Mobile) */}
+            <div className="hidden sm:flex items-center gap-4">
               <Link
                 href="/login"
-                className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#1b5e3a] transition px-1 sm:px-2"
+                className="text-sm font-semibold text-slate-600 hover:text-[#1b5e3a] transition px-2"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="text-xs sm:text-sm font-semibold bg-slate-900 text-white px-3 py-2 sm:px-5 sm:py-2.5 rounded-full hover:bg-slate-800 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 duration-200 whitespace-nowrap"
+                className="text-sm font-semibold bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-slate-800 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 duration-200 whitespace-nowrap"
+              >
+                Create Account
+              </Link>
+            </div>
+
+            {/* Mobile Hamburger Button (Visible ONLY on Mobile) */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="sm:hidden p-2 text-slate-600 hover:text-[#1b5e3a] focus:outline-none transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Menu (Animated Glassmorphism) */}
+        {isMobileMenuOpen && (
+          <div className="sm:hidden absolute top-16 left-0 w-full bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-2xl animate-fade-in-up origin-top">
+            <div className="px-5 pt-4 pb-6 space-y-4">
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block w-full text-center text-sm font-bold text-slate-700 bg-slate-50 border border-slate-200 py-3.5 rounded-xl hover:bg-slate-100 transition shadow-sm"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block w-full text-center text-sm font-bold bg-[#1b5e3a] text-white py-3.5 rounded-xl hover:bg-[#124228] transition shadow-md"
               >
                 Create Account
               </Link>
             </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* 2. HIGH-IMPACT HERO SECTION */}
