@@ -9,6 +9,9 @@ export default function LoanCenterPage() {
   const [creditLimit, setCreditLimit] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Probation State
+  const [probationEndDate, setProbationEndDate] = useState<Date | null>(null);
+
   // Form State
   const [amount, setAmount] = useState("");
   const [guarantor1, setGuarantor1] = useState("");
@@ -30,6 +33,24 @@ export default function LoanCenterPage() {
 
       setLoans(loansRes.data);
       setCreditLimit(accountRes.data.availableCreditLimit);
+
+      // 🚀 UPDATED: Perfectly sync the Banner to the Admin-Controlled Date
+      const userDoc = accountRes.data.cooperatorId;
+      if (userDoc) {
+        // Fallback to createdAt only if dateJoined is somehow missing
+        const joinedDate = new Date(userDoc.dateJoined || userDoc.createdAt);
+
+        const eligibilityDate = new Date(joinedDate);
+        eligibilityDate.setMonth(eligibilityDate.getMonth() + 6); // Add 6 months
+
+        // If today is BEFORE their specific eligibility date, show the banner
+        if (new Date() < eligibilityDate) {
+          setProbationEndDate(eligibilityDate);
+        } else {
+          // If they passed 6 months, ensure the banner hides silently
+          setProbationEndDate(null);
+        }
+      }
     } catch (error) {
       console.error("Error fetching loan data", error);
       toast.error("Failed to load loan details.");
@@ -76,7 +97,7 @@ export default function LoanCenterPage() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      toast.success("Loan application submitted successfully!");
+      toast.success("Application submitted! Live requests sent to guarantors.");
       setAmount("");
       setGuarantor1("");
       setGuarantor2("");
@@ -121,14 +142,13 @@ export default function LoanCenterPage() {
     );
   }
 
-  // Check if they already have an active/pending loan to prevent multiple applications
   const hasActiveLoan = loans.some((loan) =>
     ["PENDING_GUARANTORS", "PENDING_ADMIN", "APPROVED"].includes(loan.status),
   );
 
   return (
     <div className="animate-fade-in-up pb-10 max-w-6xl mx-auto">
-      <div className="mb-8">
+      <div className="mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
           Loan Center
         </h2>
@@ -137,10 +157,47 @@ export default function LoanCenterPage() {
         </p>
       </div>
 
+      {/* THE PROBATION AWARENESS BANNER */}
+      {probationEndDate && (
+        <div className="mb-8 bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-blue-800 mb-1">
+              New Member Probation Period
+            </h4>
+            <p className="text-sm text-blue-600">
+              Welcome to the cooperative! Standard policy requires a 6-month
+              active saving period before you can access loan facilities. Your
+              loan eligibility officially unlocks on{" "}
+              <strong className="text-blue-800">
+                {probationEndDate.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </strong>
+              .
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* LEFT COLUMN: STATUS & HISTORY */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Credit Limit Indicator Card */}
           <div className="bg-[#1b5e3a] rounded-3xl p-6 shadow-xl text-white relative overflow-hidden">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
             <p className="text-emerald-100/80 text-xs font-medium uppercase tracking-wider mb-1">
@@ -167,7 +224,6 @@ export default function LoanCenterPage() {
             </p>
           </div>
 
-          {/* Loan History List */}
           <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex-1">
             <h3 className="text-lg font-bold text-slate-800 mb-4">
               Loan History
@@ -210,7 +266,6 @@ export default function LoanCenterPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: APPLICATION FORM */}
         <div className="lg:col-span-7">
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 border border-slate-100 h-full">
             <h3 className="text-xl font-bold text-slate-800 mb-2">
@@ -248,7 +303,6 @@ export default function LoanCenterPage() {
               </div>
             ) : (
               <form onSubmit={handleApply} className="space-y-6">
-                {/* Amount Box */}
                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                   <label
                     htmlFor="amount"
@@ -277,7 +331,6 @@ export default function LoanCenterPage() {
                   </p>
                 </div>
 
-                {/* Guarantors Box */}
                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-4">
                   <h4 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">
                     Provide Guarantors

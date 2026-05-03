@@ -25,6 +25,9 @@ export default function DashboardLayout({
     role: "COOPERATOR",
   });
 
+  // 🚀 NEW: State to hold the deep financial account data (specifically the dateJoined)
+  const [userAccountData, setUserAccountData] = useState<any>(null);
+
   // UI States
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
@@ -42,10 +45,10 @@ export default function DashboardLayout({
     email: "",
   });
 
-  // 🚀 Interactive Notification State
+  // Interactive Notification State
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // 🚀 Password Change States
+  // Password Change States
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -64,12 +67,26 @@ export default function DashboardLayout({
         otherName: parsedUser.otherName || "",
         email: parsedUser.email || "",
       });
-      // Fetch dynamic alerts on load
       fetchNotifications();
+      fetchAccountData(); // 🚀 NEW: Fetch the official records
     } else {
       router.push("/login");
     }
   }, [router]);
+
+  // 🚀 NEW: Function to get the locked official date
+  const fetchAccountData = async () => {
+    try {
+      const token = localStorage.getItem("coop_token");
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/account/my-account`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setUserAccountData(res.data);
+    } catch (error) {
+      console.error("Failed to load account data for profile drawer.");
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -205,7 +222,6 @@ export default function DashboardLayout({
     }
   };
 
-  // 🚀 API-Driven Notification Handlers
   const handleMarkAllRead = async () => {
     try {
       const token = localStorage.getItem("coop_token");
@@ -289,6 +305,20 @@ export default function DashboardLayout({
   const unreadCount = notifications.filter((n) => n.unread).length;
   const displayName =
     `${user.lastName} ${user.firstName} ${user.otherName ? user.otherName : ""}`.trim();
+
+  // Helper to determine the official join date string
+  const getOfficialDateString = () => {
+    if (!userAccountData?.cooperatorId) return "Loading...";
+    const dateToUse =
+      userAccountData.cooperatorId.dateJoined ||
+      userAccountData.cooperatorId.createdAt;
+    if (!dateToUse) return "Not Set";
+    return new Date(dateToUse).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex overflow-hidden">
@@ -713,15 +743,62 @@ export default function DashboardLayout({
             {user.email}
           </p>
           <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-md uppercase tracking-wider border border-slate-200">
-            {user.fileNumber}
+            {user.role.replace("_", " ")}
           </span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 custom-scrollbar">
           <form onSubmit={handleProfileUpdate} className="flex flex-col h-full">
+            {/* 🚀 NEW: LOCKED OFFICIAL RECORDS PANEL */}
+            <div className="bg-slate-200/50 rounded-2xl p-5 border border-slate-200 shadow-inner mb-6 flex-shrink-0">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Official Records
+                </h3>
+                <svg
+                  className="w-4 h-4 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+                    ASCON File Number
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={user.fileNumber || ""}
+                    className="w-full px-3 py-2 bg-slate-200/50 border border-slate-200 rounded-lg text-sm text-slate-600 font-bold cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+                    Official Date Joined
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={getOfficialDateString()}
+                    className="w-full px-3 py-2 bg-slate-200/50 border border-slate-200 rounded-lg text-sm text-slate-600 font-bold cursor-not-allowed"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm mb-6 flex-shrink-0">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-                Personal Details
+                Editable Details
               </h3>
 
               <div className="space-y-4">
@@ -816,7 +893,6 @@ export default function DashboardLayout({
                 </div>
 
                 <div className="space-y-3">
-                  {/* Current Password Field */}
                   <div className="relative">
                     <input
                       type={showCurrentPassword ? "text" : "password"}
@@ -874,7 +950,6 @@ export default function DashboardLayout({
                     </button>
                   </div>
 
-                  {/* New Password Field */}
                   <div className="relative">
                     <input
                       type={showNewPassword ? "text" : "password"}

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 
 export default function AdminOverviewPage() {
   const [loans, setLoans] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [globalStats, setGlobalStats] = useState({
     totalCooperativeSavings: 0,
     activeMembersCount: 0,
@@ -15,9 +16,9 @@ export default function AdminOverviewPage() {
 
   // Search and Tab State
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"PENDING" | "ACTIVE" | "ARCHIVE">(
-    "PENDING",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "PENDING" | "ACTIVE" | "ARCHIVE" | "AUDIT"
+  >("PENDING");
 
   useEffect(() => {
     const token = localStorage.getItem("coop_token");
@@ -28,18 +29,20 @@ export default function AdminOverviewPage() {
 
   const fetchData = async (token: string) => {
     try {
-      // Fetch both loans and global stats simultaneously
-      const [loansRes, statsRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/all`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/account/global-stats`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      // Fetch loans, global stats, and the new audit logs simultaneously
+      const [loansRes, statsRes, auditRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/all`, config),
+        axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/account/global-stats`,
+          config,
+        ),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/audit-logs`, config),
       ]);
 
       setLoans(loansRes.data);
       setGlobalStats(statsRes.data);
+      setAuditLogs(auditRes.data);
     } catch (error) {
       console.error("Fetch Data Error:", error);
       toast.error("Failed to load cooperative dashboard data.");
@@ -141,8 +144,6 @@ export default function AdminOverviewPage() {
       0,
     );
 
-  // 🚀 NEW: Estimated Liquidity (Total Savings - Money Out on Active Loans)
-  // Note: This is a simplified estimation. A real bank would track cash-at-hand vs assets.
   const estimatedLiquidity = Math.max(
     0,
     globalStats.totalCooperativeSavings - activeLoansValue,
@@ -195,13 +196,12 @@ export default function AdminOverviewPage() {
   return (
     <div className="animate-fade-in-up pb-10">
       {/* ========================================== */}
-      {/* ROW 1: COOPERATIVE HEALTH (NEW)            */}
+      {/* ROW 1: COOPERATIVE HEALTH                  */}
       {/* ========================================== */}
       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
         Cooperative Health Overview
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Total Pooled Savings */}
         <div className="bg-[#0f3420] rounded-3xl p-6 shadow-xl shadow-emerald-900/10 text-white relative overflow-hidden group">
           <div className="absolute -right-12 -top-12 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
           <div className="relative z-10">
@@ -218,7 +218,6 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Estimated Liquidity */}
         <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             Estimated Liquidity
@@ -231,7 +230,6 @@ export default function AdminOverviewPage() {
           </p>
         </div>
 
-        {/* Active Capital in Field */}
         <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             Active Capital (Field)
@@ -246,13 +244,12 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* ========================================== */}
-      {/* ROW 2: ACTION CENTER (EXISTING)            */}
+      {/* ROW 2: ACTION CENTER                       */}
       {/* ========================================== */}
       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
         Command Actions
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        {/* Pending Reviews */}
         <div className="bg-gradient-to-br from-amber-50 to-white rounded-3xl p-6 shadow-xl shadow-amber-100/40 border border-amber-100 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -285,7 +282,6 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* HR Export Hub */}
         <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col justify-center">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -319,7 +315,7 @@ export default function AdminOverviewPage() {
 
       {/* CONTROLS: TABS & SEARCH */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex p-1 bg-slate-200/50 rounded-xl w-fit border border-slate-200">
+        <div className="flex p-1 bg-slate-200/50 rounded-xl w-fit border border-slate-200 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setActiveTab("PENDING")}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "PENDING" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
@@ -343,157 +339,217 @@ export default function AdminOverviewPage() {
           >
             Ledger Archive
           </button>
+          <button
+            onClick={() => setActiveTab("AUDIT")}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "AUDIT" ? "bg-[#1b5e3a] text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+          >
+            System Audit
+          </button>
         </div>
 
-        <div className="relative w-full sm:max-w-xs">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="w-5 h-5 text-slate-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+        {activeTab !== "AUDIT" && (
+          <div className="relative w-full sm:max-w-xs">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="w-5 h-5 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search name or file no..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-all"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search name or file no..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-all"
-          />
-        </div>
+        )}
       </div>
 
-      {/* STRIPE-STYLE DATA TABLE */}
+      {/* DYNAMIC DATA TABLE (LOANS OR AUDIT) */}
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                <th className="px-6 py-4 font-bold">Applicant Details</th>
-                <th className="px-6 py-4 font-bold">Financials</th>
-                <th className="px-6 py-4 font-bold">Status</th>
-                <th className="px-6 py-4 font-bold text-right">
-                  Review Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {displayLoans.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-12 text-center text-slate-500 font-medium"
-                  >
-                    No records found.
-                  </td>
+          {activeTab === "AUDIT" ? (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                  <th className="px-6 py-4 font-bold">Timestamp</th>
+                  <th className="px-6 py-4 font-bold">Admin Details</th>
+                  <th className="px-6 py-4 font-bold">Action Type</th>
+                  <th className="px-6 py-4 font-bold">Description</th>
                 </tr>
-              ) : (
-                displayLoans.map((loan) => (
-                  <tr
-                    key={loan._id}
-                    className="hover:bg-slate-50/60 transition-colors group"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-emerald-100 flex-shrink-0 overflow-hidden">
-                          {loan.cooperatorId?.avatarUrl ? (
-                            <img
-                              src={loan.cooperatorId.avatarUrl}
-                              alt="Avatar"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            loan.cooperatorId?.lastName?.charAt(0) || "U"
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-800">
-                            {loan.cooperatorId?.lastName}{" "}
-                            {loan.cooperatorId?.firstName}
-                          </div>
-                          <div className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-0.5">
-                            <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide border border-slate-200">
-                              {loan.cooperatorId?.fileNumber}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 tabular-nums">
-                      <div className="font-bold text-slate-800">
-                        {formatNaira(loan.amountRequested)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border ${getStatusColor(loan.status)}`}
-                      >
-                        {loan.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right align-middle">
-                      {loan.status === "PENDING_ADMIN" ? (
-                        <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-                          <button
-                            onClick={() => handleReview(loan._id, "REJECTED")}
-                            disabled={processingId === loan._id}
-                            className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-xl border border-red-200 transition-all"
-                            title="Reject Loan"
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleReview(loan._id, "APPROVED")}
-                            disabled={processingId === loan._id}
-                            className="p-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md transition-all"
-                            title="Approve Loan"
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400 font-medium italic">
-                          Reviewed
-                        </span>
-                      )}
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {auditLogs.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-slate-500 font-medium"
+                    >
+                      No audit trails found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  auditLogs.map((log) => (
+                    <tr
+                      key={log._id}
+                      className="hover:bg-slate-50/60 transition-colors"
+                    >
+                      <td className="px-6 py-4 text-xs font-medium text-slate-500 tabular-nums">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-800 text-sm">
+                          {log.adminId?.firstName} {log.adminId?.lastName}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          {log.adminId?.fileNumber}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded uppercase">
+                          {log.action.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {log.description}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                  <th className="px-6 py-4 font-bold">Applicant Details</th>
+                  <th className="px-6 py-4 font-bold">Financials</th>
+                  <th className="px-6 py-4 font-bold">Status</th>
+                  <th className="px-6 py-4 font-bold text-right">
+                    Review Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {displayLoans.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-slate-500 font-medium"
+                    >
+                      No records found.
+                    </td>
+                  </tr>
+                ) : (
+                  displayLoans.map((loan) => (
+                    <tr
+                      key={loan._id}
+                      className="hover:bg-slate-50/60 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-emerald-100 flex-shrink-0 overflow-hidden">
+                            {loan.cooperatorId?.avatarUrl ? (
+                              <img
+                                src={loan.cooperatorId.avatarUrl}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              loan.cooperatorId?.lastName?.charAt(0) || "U"
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-800">
+                              {loan.cooperatorId?.lastName}{" "}
+                              {loan.cooperatorId?.firstName}
+                            </div>
+                            <div className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-0.5">
+                              <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide border border-slate-200">
+                                {loan.cooperatorId?.fileNumber}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 tabular-nums">
+                        <div className="font-bold text-slate-800">
+                          {formatNaira(loan.amountRequested)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border ${getStatusColor(loan.status)}`}
+                        >
+                          {loan.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right align-middle">
+                        {loan.status === "PENDING_ADMIN" ? (
+                          <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                            <button
+                              onClick={() => handleReview(loan._id, "REJECTED")}
+                              disabled={processingId === loan._id}
+                              className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-xl border border-red-200 transition-all"
+                              title="Reject Loan"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleReview(loan._id, "APPROVED")}
+                              disabled={processingId === loan._id}
+                              className="p-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md transition-all"
+                              title="Approve Loan"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 font-medium italic">
+                            Reviewed
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
