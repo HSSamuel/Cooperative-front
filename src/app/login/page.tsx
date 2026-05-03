@@ -67,7 +67,7 @@ export default function LoginPage() {
             alt="ASCON Logo"
             width={48}
             height={48}
-            className="object-contain group-hover:scale-105 transition duration-300"
+            className="object-contain w-auto h-auto group-hover:scale-105 transition duration-300"
           />
           <span className="font-bold text-3xl tracking-tight text-slate-900">
             ASCON<span className="text-[#1b5e3a]">Coop</span>
