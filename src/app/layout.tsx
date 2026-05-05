@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ASCON Cooperative",
-  description: "Administrative Staff College of Nigeria Staff Cooperative",
+  description: "ASCON STAFF Multi-Purpose Co-operative Society",
 };
 
 export default function RootLayout({

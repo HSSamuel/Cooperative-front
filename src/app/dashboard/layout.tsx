@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useSocket } from "../../hooks/useSocket"; // 🚀 NEW: Import the socket hook
 
 export default function DashboardLayout({
   children,
@@ -25,10 +26,7 @@ export default function DashboardLayout({
     role: "COOPERATOR",
   });
 
-  // 🚀 NEW: State to hold the deep financial account data (specifically the dateJoined)
   const [userAccountData, setUserAccountData] = useState<any>(null);
-
-  // UI States
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -36,25 +34,68 @@ export default function DashboardLayout({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-
-  // Profile Edit Form State
   const [editForm, setEditForm] = useState({
     firstName: "",
     lastName: "",
     otherName: "",
     email: "",
   });
-
-  // Interactive Notification State
   const [notifications, setNotifications] = useState<any[]>([]);
-
-  // Password Change States
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
   });
+
+  // 🚀 NEW: Initialize the socket connection globally for the dashboard
+  const socket = useSocket(user?._id || user?.id);
+
+  // 🚀 NEW: Bulletproof Live Event Listener
+  useEffect(() => {
+    if (!socket) return;
+
+    const fetchFreshNotifications = async () => {
+      try {
+        const token = localStorage.getItem("coop_token");
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/notifications`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        const formattedNotifs = res.data.map((n: any) => {
+          const dateObj = new Date(n.createdAt);
+          return {
+            id: n._id,
+            title: n.title,
+            message: n.message,
+            time:
+              dateObj.toLocaleDateString() +
+              " " +
+              dateObj.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            unread: !n.isRead,
+            type: n.type || "info",
+          };
+        });
+
+        setNotifications(formattedNotifs);
+      } catch (error) {
+        console.error("Silent fetch failed", error);
+      }
+    };
+
+    // Listen for both generic updates and specific guarantor requests
+    socket.on("new_guarantor_request", fetchFreshNotifications);
+    socket.on("update_notifications", fetchFreshNotifications);
+
+    return () => {
+      socket.off("new_guarantor_request", fetchFreshNotifications);
+      socket.off("update_notifications", fetchFreshNotifications);
+    };
+  }, [socket]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("coop_user");
@@ -68,7 +109,7 @@ export default function DashboardLayout({
         email: parsedUser.email || "",
       });
       fetchNotifications();
-      fetchAccountData(); // 🚀 NEW: Fetch the official records
+      fetchAccountData();
     } else {
       router.push("/login");
     }
