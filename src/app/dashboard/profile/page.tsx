@@ -5,7 +5,7 @@ import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
-import { RootState } from "../../store";
+import { RootState } from "@/store";
 
 export default function ProfileBioDataPage() {
   const { account, loans, status } = useSelector(
