@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSelector } from "react-redux";
-import { RootState } from "../../store";
+import { RootState } from "@/store";
 import {
   PieChart,
   Pie,
@@ -199,9 +199,11 @@ export default function DashboardOverview() {
                       />
                     ))}
                   </Pie>
+
+                  {/* 🚀 THE FIX IS HERE */}
                   <Tooltip
-                    formatter={(value: number) => [
-                      `₦${value.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`,
+                    formatter={(value: any) => [
+                      `₦${(Number(value) || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`,
                       "Amount",
                     ]}
                     contentStyle={{
@@ -210,6 +212,7 @@ export default function DashboardOverview() {
                       boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                     }}
                   />
+
                   <Legend
                     verticalAlign="bottom"
                     height={36}
