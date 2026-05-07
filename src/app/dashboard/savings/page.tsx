@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -8,105 +9,373 @@ export default function SavingsPage() {
   const [account, setAccount] = useState({
     totalSavings: 0,
     availableCreditLimit: 0,
+    customMonthlySavings: 0,
   });
-  const [depositAmount, setDepositAmount] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDepositing, setIsDepositing] = useState(false);
 
-  const fetchAccountData = async () => {
+  const [outstandingLoanBalance, setOutstandingLoanBalance] = useState(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>({
+    firstName: "Member",
+    lastName: "",
+    email: "",
+    fileNumber: "",
+    avatarUrl: "",
+  });
+
+  // Deposit Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchAccountData = useCallback(async () => {
+    const token = localStorage.getItem("coop_token");
+    if (!token) return;
+
     try {
-      const token = localStorage.getItem("coop_token");
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/account/my-account`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const [accountRes, loansRes, txnRes] = await Promise.all([
+        axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/account/my-account`,
+          config,
+        ),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/my-loans`, config),
+        axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/account/transactions`,
+          config,
+        ),
+      ]);
+
+      setAccount(accountRes.data);
+
+      const activeLoans = loansRes.data.filter(
+        (l: any) => l.status === "APPROVED",
       );
-      setAccount(res.data);
+      const totalOutstanding = activeLoans.reduce((sum: number, loan: any) => {
+        const targetRepayment = loan.amountDue || loan.amountRequested;
+        const amountRepaid = loan.amountRepaid || 0;
+        return sum + (targetRepayment - amountRepaid);
+      }, 0);
+      setOutstandingLoanBalance(totalOutstanding);
+
+      setTransactions(txnRes.data);
     } catch (error) {
       console.error("Error fetching account data", error);
-      toast.error("Failed to load account details.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("coop_user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
     fetchAccountData();
-  }, []);
+  }, [fetchAccountData]);
+
+  const formatNaira = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
 
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const amountInKobo = parseInt(depositAmount) * 100;
 
-    // Convert the Naira input into an integer of Kobo for the backend
-    const amountInNaira = parseFloat(depositAmount);
-    if (isNaN(amountInNaira) || amountInNaira <= 0) {
-      toast.error("Please enter a valid deposit amount.");
-      return;
+    if (isNaN(amountInKobo) || amountInKobo <= 0) {
+      return toast.error("Please enter a valid amount.");
     }
-    const amountInKobo = Math.round(amountInNaira * 100);
 
-    setIsDepositing(true);
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem("coop_token");
-      const res = await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/account/deposit`,
         { amountInKobo },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      toast.success("Deposit successful! Your balance has been updated.");
-      setDepositAmount(""); // Clear the form
-      setAccount(res.data.account); // Instantly update the UI with new balances
+      toast.success("Deposit successful!");
+      setIsAddModalOpen(false);
+      setDepositAmount("");
+
+      await fetchAccountData();
     } catch (error: any) {
-      console.error("Deposit Error:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to process deposit.",
-      );
+      toast.error(error.response?.data?.message || "Deposit failed.");
     } finally {
-      setIsDepositing(false);
+      setIsSubmitting(false);
     }
   };
 
-  const formatNaira = (koboAmount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-    }).format(koboAmount / 100);
-  };
+  // 🚀 NEW LOGIC: Calculate exactly how much they saved THIS month
+  const currentMonthString = new Date().toLocaleString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+  const currentMonthSavings = transactions
+    .filter(
+      (txn) =>
+        txn.type === "CREDIT" && txn.effectiveMonth === currentMonthString,
+    )
+    .reduce((sum, txn) => sum + txn.amount, 0);
 
   if (isLoading) {
     return (
-      <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="h-48 bg-slate-200 rounded-3xl"></div>
-        <div className="h-64 bg-slate-200 rounded-3xl"></div>
+      <div className="animate-pulse flex flex-col gap-6 h-[800px] w-full">
+        <div className="h-40 bg-slate-200 rounded-sm w-full"></div>
+        <div className="h-[500px] bg-slate-200 rounded-sm w-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in-up pb-10 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-          My Savings
-        </h2>
-        <p className="text-sm sm:text-base text-slate-500 mt-1">
-          Manage your cooperative funds and grow your credit limit.
-        </p>
+    <div className="animate-fade-in-up pb-10 relative">
+      <div className="flex flex-col gap-6 w-full">
+        {/* Top 3 Stat Cards */}
+        <div className="bg-[#1b5e3a] p-6 rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-6 shadow-md border border-[#124228]">
+          <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="flex items-start justify-center gap-1 mb-2">
+              <span className="text-xl font-medium text-slate-500 mt-1">₦</span>
+              <h3 className="text-3xl font-bold text-slate-700 tracking-tight">
+                {formatNaira(account.totalSavings / 100)}
+              </h3>
+            </div>
+            <p className="text-sm text-slate-500 italic">Account Balance</p>
+          </div>
+
+          {/* 🚀 UPDATED: Live Current Monthly Savings (Uneditable) */}
+          <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="flex items-start justify-center gap-1 mb-2">
+              <span className="text-xl font-medium text-slate-500 mt-1">₦</span>
+              <h3 className="text-3xl font-bold text-slate-700 tracking-tight">
+                {formatNaira(currentMonthSavings / 100)}
+              </h3>
+            </div>
+            <p className="text-sm text-slate-500 italic">
+              Current Monthly Savings
+            </p>
+          </div>
+
+          <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="flex items-start justify-center gap-1 mb-2">
+              <span className="text-xl font-medium text-red-400 mt-1">₦</span>
+              <h3 className="text-3xl font-bold text-red-500 tracking-tight">
+                {formatNaira(outstandingLoanBalance / 100)}
+              </h3>
+            </div>
+            <p className="text-sm text-slate-500 italic">
+              Outstanding Loan Balance
+            </p>
+          </div>
+        </div>
+
+        {/* Transaction Ledger Container */}
+        <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 w-full">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4">
+            Transaction Ledger
+          </h3>
+
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-center w-28 border border-slate-200">
+                    <button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="bg-[#1b5e3a] text-white px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full transition-colors hover:bg-[#124228] shadow-sm"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                      New Deposit
+                    </button>
+                  </th>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-sm border border-slate-200">
+                    Effective Month
+                  </th>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-sm border border-slate-200">
+                    Description
+                  </th>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-sm text-center border border-slate-200">
+                    Debit
+                  </th>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-sm text-center border border-slate-200">
+                    Credit
+                  </th>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-sm text-center border border-slate-200">
+                    Dividends
+                  </th>
+                  <th className="py-3 px-4 font-bold text-slate-700 text-sm border border-slate-200">
+                    Date Modified
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-8 text-center text-slate-500 border border-slate-200"
+                    >
+                      No transactions recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((txn) => (
+                    <tr
+                      key={txn._id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="py-3 px-4 border border-slate-200">
+                        <button className="bg-slate-200 text-slate-500 px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full hover:bg-slate-300 transition-colors shadow-sm cursor-default">
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 font-medium border border-slate-200">
+                        {txn.effectiveMonth || "N/A"}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 border border-slate-200">
+                        {txn.description}
+                      </td>
+                      <td className="py-3 px-4 text-red-500 text-right font-medium border border-slate-200">
+                        {txn.type === "DEBIT"
+                          ? formatNaira(txn.amount / 100)
+                          : ""}
+                      </td>
+                      <td className="py-3 px-4 text-[#1b5e3a] text-right font-bold border border-slate-200">
+                        {txn.type === "CREDIT"
+                          ? formatNaira(txn.amount / 100)
+                          : ""}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 text-right border border-slate-200"></td>
+                      <td className="py-3 px-4 text-slate-500 text-[11px] leading-tight border border-slate-200">
+                        {new Date(txn.createdAt).toLocaleDateString()}
+                        <br />
+                        {new Date(txn.createdAt).toLocaleTimeString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Bottom Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+            <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-emerald-100 p-2 rounded-sm text-[#1b5e3a]">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">
+                  ₦{formatNaira(account.totalSavings / 100)}
+                </h3>
+              </div>
+              <p className="text-slate-500 text-xs font-medium ml-11">
+                Total saving
+              </p>
+            </div>
+
+            <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-orange-100 p-2 rounded-sm text-orange-500">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">₦0.00</h3>
+              </div>
+              <p className="text-slate-500 text-xs font-medium ml-11">
+                Total dividends
+              </p>
+            </div>
+
+            <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-red-100 p-2 rounded-sm text-red-500">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">₦0.00</h3>
+              </div>
+              <p className="text-slate-500 text-xs font-medium ml-11">
+                Total debit/ withdrawal
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* LEFT COLUMN: THE BALANCE CARD */}
-        <div className="flex flex-col gap-6">
-          <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl p-8 group border border-slate-800">
-            {/* Subtle background glow */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl transform group-hover:scale-110 transition-transform duration-700 translate-x-1/3 -translate-y-1/3"></div>
-
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/5">
+      {/* DEPOSIT MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+          <div className="bg-white rounded-sm shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-up">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
+              <h3 className="font-bold text-slate-800">New Deposit</h3>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
                 <svg
-                  className="w-6 h-6 text-emerald-400"
+                  className="w-5 h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -115,143 +384,56 @@ export default function SavingsPage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </div>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">
-                Total Available Savings
-              </p>
-              <h1 className="text-4xl font-extrabold tracking-tight mb-2">
-                {formatNaira(account.totalSavings)}
-              </h1>
-            </div>
-          </div>
-
-          {/* Educational Box */}
-          <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex items-start gap-4">
-            <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-800">
-                Did you know?
-              </h4>
-              {/* 🚀 THE FIX: text-justify added here! */}
-              <p className="text-sm text-slate-600 mt-1 text-justify">
-                Your available credit limit automatically grows as you save. You
-                currently have access to{" "}
-                <span className="font-bold text-[#1b5e3a]">
-                  {formatNaira(account.availableCreditLimit)}
-                </span>{" "}
-                in loan requests.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: DEPOSIT FORM */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 border border-slate-100 relative">
-          <h3 className="text-xl font-bold text-slate-800 mb-2">
-            Make a Deposit
-          </h3>
-          <p className="text-sm text-slate-500 mb-6">
-            Enter the amount you wish to add to your savings.
-          </p>
-
-          <form onSubmit={handleDeposit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="amount"
-                className="block text-sm font-semibold text-slate-700 mb-1.5"
-              >
-                Amount (NGN)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-slate-500 font-bold">₦</span>
-                </div>
-                <input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="1"
-                  required
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="appearance-none block w-full pl-10 pr-4 py-3.5 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1b5e3a]/20 focus:border-[#1b5e3a] sm:text-lg font-medium transition duration-200 bg-slate-50 focus:bg-white"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isDepositing}
-                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-[#1b5e3a]/20 text-base font-bold text-white bg-[#1b5e3a] hover:bg-[#124228] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b5e3a] transition-all duration-200 disabled:opacity-70 transform hover:-translate-y-0.5"
-              >
-                {isDepositing ? (
-                  <span className="flex items-center gap-2">
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Processing Deposit...
-                  </span>
-                ) : (
-                  "Complete Deposit securely"
-                )}
               </button>
             </div>
 
-            <p className="text-xs text-center text-slate-400 flex items-center justify-center gap-1.5 mt-4">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-              Transactions are encrypted and secure.
-            </p>
-          </form>
+            <form onSubmit={handleDeposit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Amount to Save (₦)
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-medium">
+                    ₦
+                  </span>
+                  <input
+                    type="number"
+                    required
+                    min="100"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a]"
+                    placeholder="e.g. 50000"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5">
+                  Enter the amount you wish to add to your total savings.
+                </p>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-bold rounded-sm hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-[#1b5e3a] hover:bg-[#124228] text-white text-sm font-bold rounded-sm transition-colors disabled:opacity-70 shadow-sm"
+                >
+                  {isSubmitting ? "Processing..." : "Save Money"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

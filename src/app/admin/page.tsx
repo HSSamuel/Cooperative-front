@@ -13,8 +13,6 @@ export default function AdminOverviewPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-
-  // Search and Tab State
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<
     "PENDING" | "ACTIVE" | "ARCHIVE" | "AUDIT"
@@ -22,15 +20,12 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("coop_token");
-    if (token) {
-      fetchData(token);
-    }
+    if (token) fetchData(token);
   }, []);
 
   const fetchData = async (token: string) => {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      // Fetch loans, global stats, and the new audit logs simultaneously
       const [loansRes, statsRes, auditRes] = await Promise.all([
         axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/all`, config),
         axios.get(
@@ -39,12 +34,10 @@ export default function AdminOverviewPage() {
         ),
         axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/audit-logs`, config),
       ]);
-
       setLoans(loansRes.data);
       setGlobalStats(statsRes.data);
       setAuditLogs(auditRes.data);
     } catch (error) {
-      console.error("Fetch Data Error:", error);
       toast.error("Failed to load cooperative dashboard data.");
     } finally {
       setIsLoading(false);
@@ -61,7 +54,6 @@ export default function AdminOverviewPage() {
       )
     )
       return;
-
     setProcessingId(loanId);
     try {
       const token = localStorage.getItem("coop_token");
@@ -70,7 +62,6 @@ export default function AdminOverviewPage() {
         { status, adminComment: `Reviewed by Admin` },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
       toast.success(`Loan successfully ${status.toLowerCase()}`);
       fetchData(token!);
     } catch (error: any) {
@@ -92,7 +83,6 @@ export default function AdminOverviewPage() {
           responseType: "blob",
         },
       );
-
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -110,40 +100,55 @@ export default function AdminOverviewPage() {
   };
 
   const formatNaira = (koboAmount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-    }).format(koboAmount / 100);
+    return new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2 }).format(
+      koboAmount / 100,
+    );
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+        return (
+          <span className="bg-[#20C997] text-white px-2 py-1 text-[10px] uppercase font-bold rounded-sm">
+            Approved
+          </span>
+        );
       case "REJECTED":
-        return "bg-red-100 text-red-700 border-red-200";
+        return (
+          <span className="bg-red-500 text-white px-2 py-1 text-[10px] uppercase font-bold rounded-sm">
+            Rejected
+          </span>
+        );
       case "REPAID":
-        return "bg-slate-100 text-slate-700 border-slate-200";
+        return (
+          <span className="bg-slate-400 text-white px-2 py-1 text-[10px] uppercase font-bold rounded-sm">
+            Repaid
+          </span>
+        );
       case "PENDING_ADMIN":
-        return "bg-amber-100 text-amber-700 border-amber-200 animate-pulse";
+        return (
+          <span className="bg-[#F39C12] text-white px-2 py-1 text-[10px] uppercase font-bold rounded-sm animate-pulse">
+            Pending Review
+          </span>
+        );
       default:
-        return "bg-blue-100 text-blue-700 border-blue-200";
+        return (
+          <span className="bg-blue-400 text-white px-2 py-1 text-[10px] uppercase font-bold rounded-sm">
+            {status.replace("_", " ")}
+          </span>
+        );
     }
   };
 
-  // --- CALCULATION LOGIC ---
   const pendingReviewsCount = loans.filter(
     (l) => l.status === "PENDING_ADMIN",
   ).length;
-
   const activeLoansValue = loans
     .filter((l) => l.status === "APPROVED")
     .reduce(
       (acc, l) => acc + ((l.amountDue || l.amountRequested) - l.amountRepaid),
       0,
     );
-
   const estimatedLiquidity = Math.max(
     0,
     globalStats.totalCooperativeSavings - activeLoansValue,
@@ -168,232 +173,139 @@ export default function AdminOverviewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <svg
-          className="animate-spin h-10 w-10 text-emerald-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
+      <div className="animate-pulse flex flex-col gap-6">
+        <div className="h-32 bg-slate-200 rounded-sm"></div>
+        <div className="h-64 bg-slate-200 rounded-sm"></div>
       </div>
     );
   }
 
   return (
     <div className="animate-fade-in-up pb-10">
-      {/* ========================================== */}
-      {/* ROW 1: COOPERATIVE HEALTH                  */}
-      {/* ========================================== */}
-      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-        Cooperative Health Overview
-      </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#0f3420] rounded-3xl p-6 shadow-xl shadow-emerald-900/10 text-white relative overflow-hidden group">
-          <div className="absolute -right-12 -top-12 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-emerald-200/70 uppercase tracking-wider mb-2">
-              Total Pooled Savings
-            </p>
-            <h2 className="text-3xl font-extrabold tabular-nums tracking-tight">
-              {formatNaira(globalStats.totalCooperativeSavings)}
-            </h2>
-            <p className="text-[10px] text-emerald-100/60 mt-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              {globalStats.activeMembersCount} Active Contributing Members
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
+        <div className="bg-[#2B2F42] rounded-sm p-6 shadow-sm text-white">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Total Pooled Savings
+          </p>
+          <h2 className="text-3xl font-bold tabular-nums tracking-tight">
+            ₦{formatNaira(globalStats.totalCooperativeSavings)}
+          </h2>
+          <p className="text-xs text-slate-400 mt-2">
+            {globalStats.activeMembersCount} Active Members
+          </p>
+        </div>
+        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             Estimated Liquidity
           </p>
-          <h2 className="text-3xl font-extrabold text-slate-800 tabular-nums tracking-tight">
-            {formatNaira(estimatedLiquidity)}
+          <h2 className="text-3xl font-bold text-slate-700 tabular-nums tracking-tight">
+            ₦{formatNaira(estimatedLiquidity)}
           </h2>
-          <p className="text-[10px] text-slate-500 mt-3 font-medium">
-            Approx. funds available for new loans
+          <p className="text-xs text-slate-400 mt-2">
+            Approx. funds available for lending
           </p>
         </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             Active Capital (Field)
           </p>
-          <h2 className="text-3xl font-extrabold text-[#1b5e3a] tabular-nums tracking-tight">
-            {formatNaira(activeLoansValue)}
+          <h2 className="text-3xl font-bold text-[#1b5e3a] tabular-nums tracking-tight">
+            ₦{formatNaira(activeLoansValue)}
           </h2>
-          <p className="text-[10px] text-slate-500 mt-3 font-medium">
+          <p className="text-xs text-slate-400 mt-2">
             Total outstanding loan balances
           </p>
         </div>
       </div>
 
-      {/* ========================================== */}
-      {/* ROW 2: ACTION CENTER                       */}
-      {/* ========================================== */}
-      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-        Command Actions
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-gradient-to-br from-amber-50 to-white rounded-3xl p-6 shadow-xl shadow-amber-100/40 border border-amber-100 flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200 flex justify-between items-center">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-              <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">
-                Action Required
-              </p>
-            </div>
-            <h2 className="text-4xl font-extrabold text-slate-800 tabular-nums">
+            <p className="text-xs font-bold text-[#F39C12] uppercase tracking-wider mb-1">
+              Action Required
+            </p>
+            <h2 className="text-3xl font-bold text-slate-700">
               {pendingReviewsCount}
             </h2>
-            <p className="text-xs font-semibold text-slate-500 mt-1">
+            <p className="text-xs text-slate-400">
               Applications awaiting approval
             </p>
           </div>
-          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center shadow-inner">
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
         </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col justify-center">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               HR Export Hub
             </p>
-            <svg
-              className="w-5 h-5 text-slate-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-              />
-            </svg>
           </div>
-          <p className="text-sm text-slate-500 mb-4 font-medium">
+          <p className="text-xs text-slate-500 mb-4">
             Generate the monthly deduction report for the ASCON Payroll team.
           </p>
           <button
             onClick={handleDownloadPayroll}
-            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md text-sm"
+            className="w-full bg-[#6A5AE0] hover:bg-[#5b4bc4] text-white font-semibold py-2.5 rounded-sm transition-colors text-sm"
           >
             Download Payroll CSV
           </button>
         </div>
       </div>
 
-      {/* CONTROLS: TABS & SEARCH */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex p-1 bg-slate-200/50 rounded-xl w-fit border border-slate-200 flex-wrap sm:flex-nowrap">
-          <button
-            onClick={() => setActiveTab("PENDING")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "PENDING" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            Action Required{" "}
-            {pendingReviewsCount > 0 && (
-              <span className="ml-2 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                {pendingReviewsCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("ACTIVE")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "ACTIVE" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            Active Capital
-          </button>
-          <button
-            onClick={() => setActiveTab("ARCHIVE")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "ARCHIVE" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            Ledger Archive
-          </button>
-          <button
-            onClick={() => setActiveTab("AUDIT")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "AUDIT" ? "bg-[#1b5e3a] text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            System Audit
-          </button>
-        </div>
-
-        {activeTab !== "AUDIT" && (
-          <div className="relative w-full sm:max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="w-5 h-5 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
+      <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-100 pb-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("PENDING")}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "PENDING" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+            >
+              Pending
+            </button>
+            <button
+              onClick={() => setActiveTab("ACTIVE")}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ACTIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setActiveTab("ARCHIVE")}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ARCHIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+            >
+              Archive
+            </button>
+            <button
+              onClick={() => setActiveTab("AUDIT")}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "AUDIT" ? "bg-[#6A5AE0] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+            >
+              Audit Log
+            </button>
+          </div>
+          {activeTab !== "AUDIT" && (
             <input
               type="text"
-              placeholder="Search name or file no..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-all"
+              className="border border-slate-300 rounded-sm px-3 py-1.5 text-sm focus:outline-none focus:border-slate-500 w-full sm:w-64"
             />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* DYNAMIC DATA TABLE (LOANS OR AUDIT) */}
-      <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           {activeTab === "AUDIT" ? (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                  <th className="px-6 py-4 font-bold">Timestamp</th>
-                  <th className="px-6 py-4 font-bold">Admin Details</th>
-                  <th className="px-6 py-4 font-bold">Action Type</th>
-                  <th className="px-6 py-4 font-bold">Description</th>
+                <tr className="border-b-2 border-slate-200 text-slate-700 font-bold">
+                  <th className="py-3 px-4">TIMESTAMP</th>
+                  <th className="py-3 px-4">ADMIN DETAILS</th>
+                  <th className="py-3 px-4">ACTION TYPE</th>
+                  <th className="py-3 px-4">DESCRIPTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {auditLogs.length === 0 ? (
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-6 py-12 text-center text-slate-500 font-medium"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       No audit trails found.
                     </td>
@@ -402,25 +314,23 @@ export default function AdminOverviewPage() {
                   auditLogs.map((log) => (
                     <tr
                       key={log._id}
-                      className="hover:bg-slate-50/60 transition-colors"
+                      className="border-b border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-6 py-4 text-xs font-medium text-slate-500 tabular-nums">
+                      <td className="py-3 px-4 text-slate-500">
                         {new Date(log.createdAt).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-slate-800 text-sm">
-                          {log.adminId?.firstName} {log.adminId?.lastName}
-                        </div>
-                        <div className="text-[10px] text-slate-500">
+                      <td className="py-3 px-4 font-semibold text-slate-700">
+                        {log.adminId?.firstName} {log.adminId?.lastName} <br />
+                        <span className="text-xs font-normal text-slate-400">
                           {log.adminId?.fileNumber}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded uppercase">
-                          {log.action.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
+                      <td className="py-3 px-4">
+                        <span className="bg-slate-200 text-slate-700 px-2 py-1 text-[10px] rounded-sm uppercase">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600">
                         {log.description}
                       </td>
                     </tr>
@@ -429,23 +339,21 @@ export default function AdminOverviewPage() {
               </tbody>
             </table>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                  <th className="px-6 py-4 font-bold">Applicant Details</th>
-                  <th className="px-6 py-4 font-bold">Financials</th>
-                  <th className="px-6 py-4 font-bold">Status</th>
-                  <th className="px-6 py-4 font-bold text-right">
-                    Review Action
-                  </th>
+                <tr className="border-b-2 border-slate-200 text-slate-700 font-bold">
+                  <th className="py-3 px-4">APPLICANT</th>
+                  <th className="py-3 px-4 text-right">REQUESTED</th>
+                  <th className="py-3 px-4 text-center">STATUS</th>
+                  <th className="py-3 px-4 text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {displayLoans.length === 0 ? (
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-6 py-12 text-center text-slate-500 font-medium"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       No records found.
                     </td>
@@ -454,92 +362,43 @@ export default function AdminOverviewPage() {
                   displayLoans.map((loan) => (
                     <tr
                       key={loan._id}
-                      className="hover:bg-slate-50/60 transition-colors group"
+                      className="border-b border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-emerald-100 flex-shrink-0 overflow-hidden">
-                            {loan.cooperatorId?.avatarUrl ? (
-                              <img
-                                src={loan.cooperatorId.avatarUrl}
-                                alt="Avatar"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              loan.cooperatorId?.lastName?.charAt(0) || "U"
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-800">
-                              {loan.cooperatorId?.lastName}{" "}
-                              {loan.cooperatorId?.firstName}
-                            </div>
-                            <div className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-0.5">
-                              <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide border border-slate-200">
-                                {loan.cooperatorId?.fileNumber}
-                              </span>
-                            </div>
-                          </div>
+                      <td className="py-4 px-4">
+                        <div className="font-semibold text-slate-800">
+                          {loan.cooperatorId?.lastName}{" "}
+                          {loan.cooperatorId?.firstName}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {loan.cooperatorId?.fileNumber}
                         </div>
                       </td>
-                      <td className="px-6 py-4 tabular-nums">
-                        <div className="font-bold text-slate-800">
-                          {formatNaira(loan.amountRequested)}
-                        </div>
+                      <td className="py-4 px-4 font-bold text-slate-700 text-right">
+                        ₦{formatNaira(loan.amountRequested)}
                       </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border ${getStatusColor(loan.status)}`}
-                        >
-                          {loan.status.replace("_", " ")}
-                        </span>
+                      <td className="py-4 px-4 text-center">
+                        {getStatusBadge(loan.status)}
                       </td>
-                      <td className="px-6 py-4 text-right align-middle">
+                      <td className="py-4 px-4 text-right">
                         {loan.status === "PENDING_ADMIN" ? (
-                          <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-                            <button
-                              onClick={() => handleReview(loan._id, "REJECTED")}
-                              disabled={processingId === loan._id}
-                              className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-xl border border-red-200 transition-all"
-                              title="Reject Loan"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
+                          <div className="flex justify-end gap-2">
                             <button
                               onClick={() => handleReview(loan._id, "APPROVED")}
                               disabled={processingId === loan._id}
-                              className="p-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md transition-all"
-                              title="Approve Loan"
+                              className="bg-[#20C997] text-white px-3 py-1 text-xs rounded-sm hover:opacity-90"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReview(loan._id, "REJECTED")}
+                              disabled={processingId === loan._id}
+                              className="bg-red-500 text-white px-3 py-1 text-xs rounded-sm hover:opacity-90"
+                            >
+                              Reject
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 font-medium italic">
+                          <span className="text-xs text-slate-400">
                             Reviewed
                           </span>
                         )}

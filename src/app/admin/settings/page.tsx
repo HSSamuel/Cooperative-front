@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
 
 export default function SystemSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // System Settings State
   const [settings, setSettings] = useState({
     interestRate: 5.0,
     creditMultiplier: 2.0,
@@ -16,7 +14,6 @@ export default function SystemSettingsPage() {
     allowRegistrations: true,
   });
 
-  // Replaced dummy data with a real state array
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   useEffect(() => {
@@ -25,18 +22,7 @@ export default function SystemSettingsPage() {
 
   const fetchSystemData = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-
-      // NOTE: These endpoints can be built in Phase 2.
-      // For now, we gracefully fall back to default settings and an empty log array.
-      /*
-      const settingsRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } });
-      const logsRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/audit-logs`, { headers: { Authorization: `Bearer ${token}` } });
-      setSettings(settingsRes.data);
-      setAuditLogs(logsRes.data);
-      */
-
-      // Simulating a fast network resolution
+      // Simulate API call for settings
       setTimeout(() => setIsLoading(false), 600);
     } catch (error) {
       toast.error("Failed to load system configurations.");
@@ -47,19 +33,11 @@ export default function SystemSettingsPage() {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-
     try {
-      const token = localStorage.getItem("coop_token");
-      // Future API Call:
-      // await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/settings`, settings, { headers: { Authorization: `Bearer ${token}` } });
-
-      // Simulate network save
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success(
-        "Global algorithms and security parameters successfully updated.",
-      );
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      toast.success("Global algorithms and security parameters updated.");
     } catch (error) {
-      toast.error("Failed to save configurations. Please try again.");
+      toast.error("Failed to save configurations.");
     } finally {
       setIsSaving(false);
     }
@@ -71,253 +49,141 @@ export default function SystemSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <svg
-          className="animate-spin h-8 w-8 text-emerald-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
+      <div className="flex flex-col gap-6 animate-pulse">
+        <div className="h-40 bg-slate-200 rounded-sm"></div>
+        <div className="h-64 bg-slate-200 rounded-sm"></div>
       </div>
     );
   }
 
   return (
     <div className="animate-fade-in-up pb-10">
-      {/* HEADER */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-slate-700">
           System Architecture
         </h2>
         <p className="text-sm text-slate-500 mt-1">
-          Configure core financial algorithms and monitor immutable
-          administrative actions across the ASCON ledger.
+          Configure core financial algorithms and access security protocols.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* LEFT COLUMN: SETTINGS FORMS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* SETTINGS FORMS */}
         <div className="lg:col-span-7 space-y-6">
-          <form onSubmit={handleSaveSettings}>
-            {/* Financial Parameters Box */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 border border-slate-100 mb-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-emerald-50 text-[#1b5e3a] rounded-xl flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800">
-                    Core Financial Engine
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Define the baseline metrics used by the automated ledger.
-                  </p>
-                </div>
-              </div>
-
+          <form onSubmit={handleSaveSettings} className="space-y-6">
+            <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200">
+              <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
+                Core Financial Engine
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Standard Interest Rate (%)
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={settings.interestRate}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          interestRate: parseFloat(e.target.value),
-                        })
-                      }
-                      className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1b5e3a]/30 focus:border-[#1b5e3a] transition-all"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 font-bold">
-                      %
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5">
-                    The fixed yield percentage applied to new member loan
-                    requests.
-                  </p>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={settings.interestRate}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        interestRate: parseFloat(e.target.value),
+                      })
+                    }
+                    className="block w-full px-4 py-2 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-slate-500"
+                  />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Borrowing Capacity Multiplier
+                    Borrowing Multiplier
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={settings.creditMultiplier}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          creditMultiplier: parseFloat(e.target.value),
-                        })
-                      }
-                      className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1b5e3a]/30 focus:border-[#1b5e3a] transition-all"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 font-bold">
-                      x Savings
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5">
-                    Calculates maximum eligible loan volume based on verified
-                    savings.
-                  </p>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={settings.creditMultiplier}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        creditMultiplier: parseFloat(e.target.value),
+                      })
+                    }
+                    className="block w-full px-4 py-2 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-slate-500"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Platform Controls Box */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/40 border border-slate-100 mb-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800">
-                    Operational Security Controls
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Live deployment switches affecting end-user access.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {/* Toggle 1 */}
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200">
+              <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
+                Operational Security Controls
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-sm border border-slate-100">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-800">
+                    <h4 className="text-sm font-bold text-slate-700">
                       Open Portal Enrollment
                     </h4>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Enable or disable the ability for new ASCON personnel to
-                      register accounts.
+                    <p className="text-xs text-slate-500">
+                      Allow new personnel to register accounts.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => toggleSetting("allowRegistrations")}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${settings.allowRegistrations ? "bg-emerald-500" : "bg-slate-300"}`}
+                    className={`relative inline-flex h-6 w-11 rounded-full transition-colors focus:outline-none ${settings.allowRegistrations ? "bg-[#20C997]" : "bg-slate-300"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.allowRegistrations ? "translate-x-5" : "translate-x-0"}`}
+                      className={`inline-block h-5 w-5 mt-0.5 transform rounded-full bg-white transition ${settings.allowRegistrations ? "translate-x-5" : "translate-x-0.5"}`}
                     />
                   </button>
                 </div>
 
-                {/* Toggle 2: Danger Zone */}
-                <div
-                  className={`flex items-center justify-between p-4 rounded-2xl border transition-colors ${settings.maintenanceMode ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100"}`}
-                >
+                <div className="flex items-center justify-between p-3 bg-red-50 rounded-sm border border-red-100">
                   <div>
-                    <h4
-                      className={`text-sm font-bold ${settings.maintenanceMode ? "text-red-700" : "text-slate-800"}`}
-                    >
-                      Strict Audit Lockout (Maintenance)
+                    <h4 className="text-sm font-bold text-red-700">
+                      Strict Audit Lockout
                     </h4>
-                    <p
-                      className={`text-xs mt-0.5 ${settings.maintenanceMode ? "text-red-500" : "text-slate-500"}`}
-                    >
-                      Freeze all member-facing operations. Use only during
-                      formal financial audits or system migrations.
+                    <p className="text-xs text-red-500">
+                      Freeze all member-facing operations (Maintenance Mode).
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => toggleSetting("maintenanceMode")}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${settings.maintenanceMode ? "bg-red-500" : "bg-slate-300"}`}
+                    className={`relative inline-flex h-6 w-11 rounded-full transition-colors focus:outline-none ${settings.maintenanceMode ? "bg-red-500" : "bg-red-200"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.maintenanceMode ? "translate-x-5" : "translate-x-0"}`}
+                      className={`inline-block h-5 w-5 mt-0.5 transform rounded-full bg-white transition ${settings.maintenanceMode ? "translate-x-5" : "translate-x-0.5"}`}
                     />
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="w-full flex justify-center py-4 px-4 rounded-xl shadow-lg shadow-[#1b5e3a]/20 text-sm font-bold text-white bg-[#1b5e3a] hover:bg-[#124228] transition-all duration-200 disabled:opacity-70 transform hover:-translate-y-0.5"
-              >
-                {isSaving
-                  ? "Synchronizing Configuration..."
-                  : "Apply Global Security Policy"}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="w-full bg-[#6A5AE0] hover:bg-[#5b4bc4] text-white text-sm font-bold py-3 rounded-sm transition-colors disabled:opacity-70"
+            >
+              {isSaving ? "Synchronizing..." : "Apply Global Policy"}
+            </button>
           </form>
         </div>
 
-        {/* RIGHT COLUMN: SECURITY AUDIT LOG */}
+        {/* SECURITY AUDIT LOG */}
         <div className="lg:col-span-5">
-          <div className="bg-[#0f3420] rounded-3xl p-6 shadow-xl shadow-emerald-900/10 border border-[#1b5e3a] h-full flex flex-col relative overflow-hidden min-h-[400px]">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
-
-            <div className="relative z-10 border-b border-[#1b5e3a] pb-4 mb-6 flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  Immutable Action Ledger
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                </h3>
-                <p className="text-xs text-emerald-200/70 mt-1">
-                  Cryptographically secure record of admin modifications.
-                </p>
-              </div>
+          <div className="bg-white rounded-sm border border-slate-200 shadow-sm h-full flex flex-col min-h-[400px]">
+            <div className="p-4 border-b border-slate-100 bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-700">System Logs</h3>
+              <p className="text-xs text-slate-500">
+                Recent configuration changes.
+              </p>
             </div>
-
-            <div className="relative z-10 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
               {auditLogs.length === 0 ? (
-                // 🚀 THE PRODUCTION EMPTY STATE
-                <div className="flex flex-col items-center justify-center h-full py-12 text-center opacity-70">
+                <>
                   <svg
-                    className="w-12 h-12 text-emerald-500/40 mb-4"
+                    className="w-10 h-10 text-slate-300 mb-3"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -329,32 +195,18 @@ export default function SystemSettingsPage() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <p className="text-sm font-bold text-emerald-100">
-                    No Registry Activity Found
+                  <p className="text-sm font-semibold text-slate-600">
+                    No Activity Found
                   </p>
-                  <p className="text-xs text-emerald-200/50 mt-1 max-w-[200px] leading-relaxed">
-                    Critical system overrides and approvals will be permanently
-                    logged here.
+                  <p className="text-xs text-slate-400 mt-1 max-w-[200px]">
+                    Configuration overrides will be permanently logged here.
                   </p>
-                </div>
+                </>
               ) : (
-                <div className="space-y-6">
-                  {auditLogs.map((log, index) => (
-                    <div key={log.id} className="relative flex gap-4">
-                      {index !== auditLogs.length - 1 && (
-                        <div className="absolute left-4 top-8 bottom-[-24px] w-0.5 bg-[#1b5e3a]/50"></div>
-                      )}
-                      {/* Mapping logic remains ready for when the backend is connected */}
-                    </div>
-                  ))}
+                <div className="w-full space-y-4">
+                  {/* Map actual logs here when backend is wired */}
                 </div>
               )}
-            </div>
-
-            <div className="relative z-10 mt-6 pt-4 border-t border-[#1b5e3a] text-center">
-              <p className="text-[10px] text-emerald-200/40 uppercase tracking-widest">
-                Data stream is end-to-end encrypted.
-              </p>
             </div>
           </div>
         </div>

@@ -73,35 +73,33 @@ export default function AdminLayout({
         />
       )}
 
-      {/* ADMIN SIDEBAR (Push Sidebar Architecture) */}
+      {/* ADMIN SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-[#0f3420] text-white flex flex-col border-r border-[#1b5e3a] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
-          w-72 lg:w-20 lg:hover:w-72 lg:sticky lg:top-0 lg:h-screen
+        className={`fixed inset-y-0 left-0 z-50 bg-[#23232F] text-white flex flex-col border-r border-[#1B1B25] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
+          w-72 lg:w-64 lg:sticky lg:top-0 lg:h-screen
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        <div className="h-20 flex items-center px-5 border-b border-[#1b5e3a] flex-shrink-0">
-          <Link href="/admin" className="flex items-center gap-4 w-full">
-            <div className="bg-white p-1.5 rounded-lg flex-shrink-0">
-              <Image
-                src="/ascon-logo.png"
-                alt="ASCON Logo"
-                width={28}
-                height={28}
-                className="object-contain"
-              />
-            </div>
-            <div className="whitespace-nowrap transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100">
-              <span className="font-bold text-lg tracking-tight text-white block leading-tight">
-                ASCON<span className="text-emerald-400">Admin</span>
+        <div className="h-20 flex items-center justify-center px-4 border-b border-[#313140] flex-shrink-0 bg-white">
+          <Link href="/admin" className="flex items-center gap-3 w-full">
+            <Image
+              src="/ascon-logo.png"
+              alt="ASCON Logo"
+              width={40}
+              height={40}
+              className="object-contain w-auto h-auto"
+            />
+            <div className="flex flex-col">
+              <span className="font-extrabold text-[10px] tracking-tight text-slate-800 uppercase leading-tight">
+                System Demo
               </span>
-              <span className="text-[10px] text-emerald-200 uppercase tracking-widest block leading-tight">
-                Command Center
+              <span className="font-bold text-lg tracking-tight text-[#1b5e3a] leading-tight">
+                Admin Console
               </span>
             </div>
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -109,20 +107,20 @@ export default function AdminLayout({
                 key={item.name}
                 href={item.href}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 ${
+                className={`flex items-center gap-4 px-6 py-3.5 transition-all duration-200 ${
                   isActive
-                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/50 font-bold"
-                    : "text-emerald-100/70 hover:bg-[#1b5e3a] hover:text-white font-medium"
+                    ? "bg-slate-100 text-slate-800 border-l-4 border-[#1b5e3a] font-bold"
+                    : "text-slate-400 border-l-4 border-transparent hover:bg-white/5 hover:text-white font-medium"
                 }`}
               >
                 <svg
-                  className={`w-6 h-6 flex-shrink-0 transition-colors ${
-                    isActive ? "text-white" : "text-emerald-400/50"
+                  className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                    isActive ? "text-[#1b5e3a]" : "text-slate-500"
                   }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={2}
+                  strokeWidth={isActive ? 2.5 : 2}
                 >
                   <path
                     strokeLinecap="round"
@@ -130,22 +128,19 @@ export default function AdminLayout({
                     d={item.icon}
                   />
                 </svg>
-                <span className="whitespace-nowrap transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:delay-100">
-                  {item.name}
-                </span>
+                <span className="whitespace-nowrap">{item.name}</span>
               </Link>
             );
           })}
-        </nav>
 
-        {/* BOTTOM ACTION: EXIT TO COOP DASHBOARD */}
-        <div className="p-4 border-t border-[#1b5e3a] bg-[#0a2416] flex-shrink-0">
+          <div className="my-4 border-t border-[#313140] mx-4"></div>
+
           <button
             onClick={handleExitConsole}
-            className="flex items-center justify-start gap-4 w-full px-3 py-3 rounded-xl bg-[#1b5e3a] hover:bg-emerald-600 text-white font-bold transition-colors shadow-inner border border-emerald-700/50 overflow-hidden"
+            className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-[#00B5E2] hover:bg-white/5 hover:text-[#00B5E2] font-medium"
           >
             <svg
-              className="w-6 h-6 flex-shrink-0 text-emerald-200"
+              className="w-5 h-5 flex-shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -157,17 +152,14 @@ export default function AdminLayout({
                 d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
               />
             </svg>
-            <span className="whitespace-nowrap transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:delay-100">
-              Exit to Coop View
-            </span>
+            <span className="whitespace-nowrap">Exit to Coop View</span>
           </button>
-        </div>
+        </nav>
       </aside>
 
-      {/* MAIN CONTENT AREA - Now it flexes alongside the sticky sidebar */}
+      {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 h-screen overflow-y-auto">
-        {/* FROSTED GLASS HEADER */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 h-20 flex-shrink-0 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm h-16 flex-shrink-0 px-4 sm:px-6 lg:px-8 flex items-center justify-between mx-4 mt-4 rounded-sm">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -187,7 +179,7 @@ export default function AdminLayout({
                 />
               </svg>
             </button>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight hidden sm:block">
+            <h1 className="text-base sm:text-lg font-bold text-slate-700 tracking-tight hidden sm:block">
               {pathname === "/admin"
                 ? "Command Center"
                 : pathname.includes("members")
@@ -203,18 +195,17 @@ export default function AdminLayout({
               <p className="text-sm font-bold text-slate-800">
                 {adminUser.lastName} {adminUser.firstName}
               </p>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-[#1b5e3a] uppercase tracking-widest">
                 {adminUser.role.replace("_", " ")}
               </p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-600/20 border-2 border-emerald-100">
+            <div className="h-9 w-9 rounded-sm bg-[#1b5e3a] text-white flex items-center justify-center font-bold shadow-sm">
               {adminUser.lastName.charAt(0) || "A"}
             </div>
           </div>
         </header>
 
-        {/* DYNAMIC PAGE CONTENT INJECTED HERE */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full mx-auto">
           {children}
         </main>
       </div>
