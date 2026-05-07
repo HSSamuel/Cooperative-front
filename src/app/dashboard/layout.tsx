@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSocket } from "../../hooks/useSocket";
 import { useDispatch } from "react-redux";
@@ -40,11 +40,7 @@ export default function DashboardLayout({
 
     const fetchFreshNotifications = async () => {
       try {
-        const token = localStorage.getItem("coop_token");
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/notifications`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        const res = await apiClient.get("/notifications");
 
         // 🚀 THE FIX: Filter out Login and Logout notifications
         const formattedNotifs = res.data
@@ -100,11 +96,7 @@ export default function DashboardLayout({
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      const res = await apiClient.get("/notifications");
 
       // 🚀 THE FIX: Filter out Login and Logout notifications
       const formattedNotifs = res.data
@@ -132,8 +124,13 @@ export default function DashboardLayout({
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("coop_token");
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+
     localStorage.removeItem("coop_user");
     dispatch(clearFinanceData());
     router.push("/login");
@@ -384,13 +381,11 @@ export default function DashboardLayout({
               )}
             </div>
 
-            {/* 🚀 THE FIX: ADDED USER NAME & ROLE NEXT TO AVATAR */}
             <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
               <Link
                 href="/dashboard/profile"
                 className="flex items-center gap-3"
               >
-                {/* Text section visible on desktop, hidden on mobile */}
                 <div className="text-right hidden md:block">
                   <p className="text-sm font-bold text-slate-800">
                     {user.firstName} {user.lastName}

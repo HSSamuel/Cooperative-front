@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import Link from "next/link";
 
 function ActionProcessor() {
@@ -17,9 +17,11 @@ function ActionProcessor() {
     const processAction = async () => {
       const loanId = searchParams.get("loanId");
       const action = searchParams.get("action");
-      const token = localStorage.getItem("coop_token");
 
-      if (!token) {
+      // 🚀 The token is hidden in a cookie now, so we just check if the user profile exists locally
+      const userStr = localStorage.getItem("coop_user");
+
+      if (!userStr) {
         setStatus("unauthorized");
         setMessage(
           "Security Check: Please log in to verify your identity before processing this request.",
@@ -36,17 +38,14 @@ function ActionProcessor() {
       }
 
       try {
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/loans/${loanId}/guarantee`,
-          { action },
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        // 🚀 Clean apiClient call
+        await apiClient.put(`/loans/${loanId}/guarantee`, { action });
+
         setStatus("success");
         setMessage(
           `Successfully ${action.toLowerCase()} the guarantor request.`,
         );
 
-        // Auto-redirect to dashboard after a few seconds
         setTimeout(() => {
           router.push("/dashboard");
         }, 3000);

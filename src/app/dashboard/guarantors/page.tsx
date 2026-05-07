@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function GuarantorRequestsPage() {
@@ -11,13 +11,8 @@ export default function GuarantorRequestsPage() {
 
   const fetchRequests = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/guarantor-requests`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      // 🚀 Clean apiClient call
+      const res = await apiClient.get("/loans/guarantor-requests");
       setRequests(res.data);
     } catch (error) {
       toast.error("Failed to load guarantor requests.");
@@ -36,12 +31,9 @@ export default function GuarantorRequestsPage() {
   ) => {
     setProcessingId(loanId);
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/${loanId}/guarantee`,
-        { action },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.put(`/loans/${loanId}/guarantee`, { action });
+
       toast.success(
         action === "ACCEPTED"
           ? "Guarantor request accepted."

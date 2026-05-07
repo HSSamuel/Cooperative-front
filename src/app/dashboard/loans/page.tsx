@@ -5,18 +5,16 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store";
 import { fetchFinancialData } from "@/store/financeSlice";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function LoansPage() {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Read instantly from global Redux state!
   const { account, loans, status } = useSelector(
     (state: RootState) => state.finance,
   );
 
-  // Modal State for Manual Repayment
   const [isRepayModalOpen, setIsRepayModalOpen] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [repayAmount, setRepayAmount] = useState("");
@@ -29,7 +27,6 @@ export default function LoansPage() {
     }).format(amountInKobo / 100);
   };
 
-  // 🚀 MATH: Calculate Portfolio Aggregates
   const activeLoans = loans.filter((l: any) => l.status === "APPROVED");
 
   const totalBorrowed = activeLoans.reduce(
@@ -42,7 +39,6 @@ export default function LoansPage() {
   );
   const outstandingDebt = totalBorrowed - totalRepaid;
 
-  // Badge Status Color Helper for the Loan Ledger
   const getStatusBadge = (loanStatus: string) => {
     switch (loanStatus) {
       case "APPROVED":
@@ -107,7 +103,6 @@ export default function LoansPage() {
     setIsRepayModalOpen(true);
   };
 
-  // 🚀 MANUAL REPAYMENT HANDLER
   const handleRepayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLoanId) return;
@@ -118,24 +113,17 @@ export default function LoansPage() {
       return toast.error("Please enter a valid repayment amount.");
     }
 
-    // Client-side check against their available savings
     if (amountInKobo > account.totalSavings) {
       return toast.error("Insufficient savings to make this repayment.");
     }
 
     setIsRepaying(true);
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/${selectedLoanId}/repay`,
-        { amountInKobo },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      await apiClient.post(`/loans/${selectedLoanId}/repay`, { amountInKobo });
 
       toast.success("Repayment processed successfully!");
       setIsRepayModalOpen(false);
 
-      // Instantly refresh Redux store so UI updates immediately
       dispatch(fetchFinancialData());
     } catch (error: any) {
       toast.error(
@@ -164,9 +152,7 @@ export default function LoansPage() {
   return (
     <div className="animate-fade-in-up pb-10 relative">
       <div className="flex flex-col gap-6 w-full">
-        {/* 🚀 4-Point Debt KPI Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: Total Borrowed */}
           <div className="bg-white rounded-sm p-6 shadow-sm border-l-4 border-slate-400 relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 text-slate-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
@@ -188,7 +174,6 @@ export default function LoansPage() {
             </div>
           </div>
 
-          {/* Card 2: Total Repaid */}
           <div className="bg-white rounded-sm p-6 shadow-sm border-l-4 border-[#1b5e3a] relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 text-emerald-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
@@ -210,7 +195,6 @@ export default function LoansPage() {
             </div>
           </div>
 
-          {/* Card 3: Outstanding Debt */}
           <div className="bg-white rounded-sm p-6 shadow-sm border-l-4 border-red-500 relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 text-red-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
@@ -232,7 +216,6 @@ export default function LoansPage() {
             </div>
           </div>
 
-          {/* Card 4: Active Loans */}
           <div className="bg-white rounded-sm p-6 shadow-sm border-l-4 border-amber-500 relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 text-amber-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
@@ -254,7 +237,6 @@ export default function LoansPage() {
           </div>
         </div>
 
-        {/* 🚀 BEAUTIFUL EYE-CATCHING LOAN BREAKDOWN SECTION */}
         {activeLoans.length > 0 && (
           <div className="flex flex-col gap-6">
             {activeLoans.map((loan: any) => {
@@ -284,7 +266,6 @@ export default function LoansPage() {
                   key={loan._id}
                   className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden w-full transition-shadow hover:shadow-md"
                 >
-                  {/* Premium Gradient Header */}
                   <div className="bg-gradient-to-r from-[#1b5e3a] to-[#0f3420] px-6 py-6 md:py-8 md:px-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10 pointer-events-none">
                       <svg
@@ -339,7 +320,6 @@ export default function LoansPage() {
                     </div>
                   </div>
 
-                  {/* 6-Point Analytics Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 sm:gap-y-8 gap-x-4 sm:gap-x-6 p-4 sm:p-6 md:p-8 bg-slate-50/50 border-b border-slate-100">
                     <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -498,7 +478,6 @@ export default function LoansPage() {
                     </div>
                   </div>
 
-                  {/* Progress Bar & Manual Repayment Button */}
                   <div className="p-5 md:p-8 bg-white">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-3 gap-3">
                       <div>
@@ -511,7 +490,6 @@ export default function LoansPage() {
                           {progress}%
                         </span>
 
-                        {/* 🚀 THE NEW MANUAL REPAYMENT BUTTON */}
                         <button
                           onClick={() => openRepayModal(loan._id)}
                           className="ml-auto sm:ml-0 bg-[#1b5e3a] text-white px-4 py-2 rounded-sm text-xs font-bold shadow-sm hover:bg-[#124228] transition-colors flex items-center gap-1"
@@ -568,7 +546,6 @@ export default function LoansPage() {
           </div>
         )}
 
-        {/* 🚀 Loan History Ledger Container */}
         <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 w-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 pb-4 gap-4">
             <h3 className="text-xl font-bold text-slate-800">Loan Ledger</h3>
@@ -651,7 +628,6 @@ export default function LoansPage() {
                         <td className="py-3 px-4 border border-slate-200">
                           {loan.guarantor1?.cooperatorId ? (
                             <div className="flex flex-col gap-1.5 min-w-[200px]">
-                              {/* Guarantor 1 */}
                               <div className="flex items-center justify-between gap-4 bg-white px-2 py-1.5 rounded-sm border border-slate-200 shadow-sm">
                                 <span className="text-[11px] font-bold text-slate-700 truncate">
                                   {loan.guarantor1.cooperatorId.firstName}{" "}
@@ -660,7 +636,6 @@ export default function LoansPage() {
                                 {getGuarantorStatus(loan.guarantor1.status)}
                               </div>
 
-                              {/* Guarantor 2 */}
                               {loan.guarantor2?.cooperatorId && (
                                 <div className="flex items-center justify-between gap-4 bg-white px-2 py-1.5 rounded-sm border border-slate-200 shadow-sm">
                                   <span className="text-[11px] font-bold text-slate-700 truncate">
@@ -702,7 +677,6 @@ export default function LoansPage() {
         </div>
       </div>
 
-      {/* 🚀 MANUAL REPAYMENT MODAL */}
       {isRepayModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
           <div className="bg-white rounded-sm shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-up">

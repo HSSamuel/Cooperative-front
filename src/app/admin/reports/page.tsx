@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function HRReportsPage() {
@@ -19,15 +19,8 @@ export default function HRReportsPage() {
 
   const fetchReportData = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-      // For the MVP, we pull all loans and filter on the frontend.
-      // In Phase 2, this would be a dedicated analytics endpoint.
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/all`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      // 🚀 Clean apiClient call
+      const res = await apiClient.get("/loans/all");
       setLoans(res.data);
     } catch (error) {
       toast.error("Failed to load financial intelligence data.");
@@ -45,12 +38,10 @@ export default function HRReportsPage() {
 
     setIsExporting(true);
     try {
-      const token = localStorage.getItem("coop_token");
-      // Passing dates as query parameters
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/payroll-report?start=${startDate}&end=${endDate}`,
+      // 🚀 Clean apiClient call, retaining the blob responseType
+      const res = await apiClient.get(
+        `/loans/payroll-report?start=${startDate}&end=${endDate}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
         },
       );
@@ -94,7 +85,7 @@ export default function HRReportsPage() {
       ? ((totalRepaid / totalDisbursed) * 100).toFixed(1)
       : "0.0";
 
-  // Mock Risk Logic: Flag loans where repayment is less than 10% (adjust logic as needed)
+  // Mock Risk Logic: Flag loans where repayment is less than 10%
   const atRiskLoans = activeLoans.filter(
     (l) => l.amountRepaid / (l.amountDue || l.amountRequested) < 0.1,
   );
@@ -128,7 +119,6 @@ export default function HRReportsPage() {
 
   return (
     <div className="animate-fade-in-up">
-      {/* HEADER */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
           HR Financial Intelligence
@@ -138,7 +128,6 @@ export default function HRReportsPage() {
         </p>
       </div>
 
-      {/* TOP ROW: CAPITAL FLOW OVERVIEW */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
@@ -178,7 +167,6 @@ export default function HRReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT COLUMN: CUSTOM EXPORT ENGINE */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-100">
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
@@ -240,16 +228,12 @@ export default function HRReportsPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: RISK & DEFAULT LEDGER */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden h-full flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <div>
                 <h3 className="font-bold text-slate-800">
-                  {/* Shows on Mobile */}
                   <span className="sm:hidden">Priority Risk Watch</span>
-
-                  {/* Shows on Desktop/Tablet */}
                   <span className="hidden sm:inline">
                     Risk & Default Ledger
                   </span>

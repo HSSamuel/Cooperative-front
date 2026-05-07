@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function SavingsPage() {
@@ -23,27 +22,16 @@ export default function SavingsPage() {
     avatarUrl: "",
   });
 
-  // Deposit Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchAccountData = useCallback(async () => {
-    const token = localStorage.getItem("coop_token");
-    if (!token) return;
-
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
       const [accountRes, loansRes, txnRes] = await Promise.all([
-        axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/account/my-account`,
-          config,
-        ),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/my-loans`, config),
-        axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/account/transactions`,
-          config,
-        ),
+        apiClient.get("/account/my-account"),
+        apiClient.get("/loans/my-loans"),
+        apiClient.get("/account/transactions"),
       ]);
 
       setAccount(accountRes.data);
@@ -91,15 +79,10 @@ export default function SavingsPage() {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/account/deposit`,
-        {
-          amountInKobo,
-          targetUserId: user._id || user.id,
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      await apiClient.post("/account/deposit", {
+        amountInKobo,
+        targetUserId: user._id || user.id,
+      });
 
       toast.success("Deposit successful!");
       setIsAddModalOpen(false);
@@ -136,7 +119,6 @@ export default function SavingsPage() {
   return (
     <div className="animate-fade-in-up pb-10 relative">
       <div className="flex flex-col gap-6 w-full">
-        {/* Top 3 Stat Cards */}
         <div className="bg-[#1b5e3a] p-6 rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-6 shadow-md border border-[#124228]">
           <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
             <div className="flex items-start justify-center gap-1 mb-2">
@@ -173,7 +155,6 @@ export default function SavingsPage() {
           </div>
         </div>
 
-        {/* Transaction Ledger Container */}
         <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 w-full">
           <h3 className="text-xl font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4">
             Transaction Ledger
@@ -286,7 +267,6 @@ export default function SavingsPage() {
             </table>
           </div>
 
-          {/* Bottom Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
             <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
               <div className="flex items-center gap-3 mb-1">
@@ -365,7 +345,6 @@ export default function SavingsPage() {
         </div>
       </div>
 
-      {/* DEPOSIT MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
           <div className="bg-white rounded-sm shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-up">
@@ -406,7 +385,7 @@ export default function SavingsPage() {
                     min="100"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()} // 🚀 THE FIX: Prevents scroll-wheel modifications
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     className="w-full pl-8 pr-3 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a]"
                     placeholder="e.g. 50000"
                   />

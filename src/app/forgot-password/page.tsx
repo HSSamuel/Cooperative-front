@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -18,10 +18,9 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`,
-        { email },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.post("/auth/forgot-password", { email });
+
       setIsSuccess(true);
       toast.success("Reset link sent!");
     } catch (error: any) {

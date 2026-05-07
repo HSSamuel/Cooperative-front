@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function SystemSettingsPage() {
@@ -22,7 +23,11 @@ export default function SystemSettingsPage() {
 
   const fetchSystemData = async () => {
     try {
-      // Simulate API call for settings
+      // 🚀 Clean apiClient call (Uncomment when backend is ready)
+      // const res = await apiClient.get("/system/settings");
+      // setSettings(res.data.settings);
+
+      // Simulating API call for now since backend route doesn't exist yet
       setTimeout(() => setIsLoading(false), 600);
     } catch (error) {
       toast.error("Failed to load system configurations.");
@@ -34,6 +39,10 @@ export default function SystemSettingsPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
+      // 🚀 Clean apiClient call (Uncomment when backend is ready)
+      // await apiClient.put("/system/settings", settings);
+
+      // Simulating API call for now
       await new Promise((resolve) => setTimeout(resolve, 800));
       toast.success("Global algorithms and security parameters updated.");
     } catch (error) {

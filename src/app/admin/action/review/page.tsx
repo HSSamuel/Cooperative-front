@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import Link from "next/link";
 
 function AdminActionProcessor() {
@@ -16,11 +16,11 @@ function AdminActionProcessor() {
   useEffect(() => {
     const processAdminAction = async () => {
       const loanId = searchParams.get("loanId");
-      const action = searchParams.get("action"); // "APPROVED" or "REJECTED"
-      const token = localStorage.getItem("coop_token");
+      const action = searchParams.get("action");
 
-      // 1. Security Check: Are they logged in?
-      if (!token) {
+      const userStr = localStorage.getItem("coop_user");
+
+      if (!userStr) {
         setStatus("unauthorized");
         setMessage(
           "Security Check: Please log in to your Admin account to process this loan.",
@@ -28,7 +28,6 @@ function AdminActionProcessor() {
         return;
       }
 
-      // 2. Validate URL Parameters
       if (!loanId || !action) {
         setStatus("error");
         setMessage(
@@ -38,20 +37,15 @@ function AdminActionProcessor() {
       }
 
       try {
-        // 3. 🚀 THE DIFFERENCE: Hitting the Admin Review Route
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/loans/${loanId}/review`,
-          {
-            status: action,
-            adminComment: "Reviewed via Email Action Link",
-          },
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        // 🚀 Clean apiClient call
+        await apiClient.put(`/loans/${loanId}/review`, {
+          status: action,
+          adminComment: "Reviewed via Email Action Link",
+        });
 
         setStatus("success");
         setMessage(`Loan successfully marked as ${action.toLowerCase()}.`);
 
-        // 4. 🚀 THE DIFFERENCE: Redirecting back to the Admin Dashboard
         setTimeout(() => {
           router.push("/admin");
         }, 3000);

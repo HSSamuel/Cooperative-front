@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function AdminOverviewPage() {
@@ -19,20 +19,16 @@ export default function AdminOverviewPage() {
   >("PENDING");
 
   useEffect(() => {
-    const token = localStorage.getItem("coop_token");
-    if (token) fetchData(token);
+    fetchData();
   }, []);
 
-  const fetchData = async (token: string) => {
+  const fetchData = async () => {
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      // 🚀 Clean apiClient call
       const [loansRes, statsRes, auditRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/all`, config),
-        axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/account/global-stats`,
-          config,
-        ),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/audit-logs`, config),
+        apiClient.get("/loans/all"),
+        apiClient.get("/account/global-stats"),
+        apiClient.get("/auth/audit-logs"),
       ]);
       setLoans(loansRes.data);
       setGlobalStats(statsRes.data);
@@ -56,14 +52,13 @@ export default function AdminOverviewPage() {
       return;
     setProcessingId(loanId);
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/${loanId}/review`,
-        { status, adminComment: `Reviewed by Admin` },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.put(`/loans/${loanId}/review`, {
+        status,
+        adminComment: `Reviewed by Admin`,
+      });
       toast.success(`Loan successfully ${status.toLowerCase()}`);
-      fetchData(token!);
+      fetchData();
     } catch (error: any) {
       toast.error(
         error.response?.data?.message || "Failed to update loan status.",
@@ -75,14 +70,10 @@ export default function AdminOverviewPage() {
 
   const handleDownloadPayroll = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/payroll-report`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        },
-      );
+      // 🚀 Clean apiClient call
+      const res = await apiClient.get("/loans/payroll-report", {
+        responseType: "blob",
+      });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;

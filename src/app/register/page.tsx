@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,7 +23,8 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+      // 🚀 Clean apiClient call
+      await apiClient.post("/auth/register", {
         firstName,
         lastName,
         otherName,
@@ -50,7 +51,7 @@ export default function RegisterPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
-          className="flex items-center gap-3 hover:opacity-80 transition w-full"
+          className="flex items-center justify-center gap-3 hover:opacity-80 transition w-full"
         >
           <Image
             src="/ascon-logo.png"

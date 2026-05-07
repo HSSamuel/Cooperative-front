@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -29,10 +29,11 @@ export default function ResetPasswordPage({
 
     setIsSubmitting(true);
     try {
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password/${params.token}`,
-        { password: passwordData.password },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.put(`/auth/reset-password/${params.token}`, {
+        password: passwordData.password,
+      });
+
       toast.success("Password successfully reset! You can now log in.");
       setTimeout(() => router.push("/login"), 2000);
     } catch (error: any) {

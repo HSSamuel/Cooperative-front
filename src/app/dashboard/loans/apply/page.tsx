@@ -3,36 +3,26 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function ApplyForLoanPage() {
   const router = useRouter();
 
-  // Form State
   const [loanType, setLoanType] = useState("REGULAR");
   const [amountRequested, setAmountRequested] = useState("");
-
   const [guarantor1, setGuarantor1] = useState("");
   const [guarantor2, setGuarantor2] = useState("");
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Account State (To enforce credit limits)
   const [creditLimit, setCreditLimit] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAccountData = async () => {
-      const token = localStorage.getItem("coop_token");
-      if (!token) return;
-
       try {
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const { data } = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/account/my-account`,
-          config,
-        );
+        // 🚀 Clean apiClient call
+        const { data } = await apiClient.get("/account/my-account");
         setCreditLimit(data.availableCreditLimit);
       } catch (error) {
         console.error("Failed to fetch account for limit", error);
@@ -52,7 +42,6 @@ export default function ApplyForLoanPage() {
     }).format(amountInKobo / 100);
   };
 
-  // Live Math: ParseFloat and Math.round to prevent floating point errors
   const requestedValueKobo = Math.round(
     (parseFloat(amountRequested) || 0) * 100,
   );
@@ -81,18 +70,13 @@ export default function ApplyForLoanPage() {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem("coop_token");
-
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/loans/request`,
-        {
-          loanType,
-          amountInKobo: requestedValueKobo,
-          guarantor1FileNumber: guarantor1,
-          guarantor2FileNumber: guarantor2,
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.post("/loans/request", {
+        loanType,
+        amountInKobo: requestedValueKobo,
+        guarantor1FileNumber: guarantor1,
+        guarantor2FileNumber: guarantor2,
+      });
 
       toast.success("Loan application submitted successfully!");
       router.push("/dashboard/loans");
@@ -116,7 +100,6 @@ export default function ApplyForLoanPage() {
 
   return (
     <div className="animate-fade-in-up pb-10">
-      {/* Header with Back Button */}
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/dashboard/loans"
@@ -147,10 +130,8 @@ export default function ApplyForLoanPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT PANEL: The Application Form */}
         <div className="lg:col-span-8 bg-white rounded-sm border border-slate-200 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* 1. Loan Type Selection */}
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-3">
                 1. Select Facility Type
@@ -221,7 +202,6 @@ export default function ApplyForLoanPage() {
 
             <hr className="border-slate-100" />
 
-            {/* 2. Guarantors Input Section */}
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">
                 2. Nominate Guarantors
@@ -267,7 +247,6 @@ export default function ApplyForLoanPage() {
 
             <hr className="border-slate-100" />
 
-            {/* 3. Amount Input */}
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">
                 3. Enter Requested Amount
@@ -290,7 +269,7 @@ export default function ApplyForLoanPage() {
                   min="1000"
                   value={amountRequested}
                   onChange={(e) => setAmountRequested(e.target.value)}
-                  onWheel={(e) => (e.target as HTMLInputElement).blur()} // 🚀 THE FIX: Prevents scroll-wheel modifications
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                   className={`w-full pl-10 pr-4 py-4 text-xl font-bold border-2 rounded-sm focus:outline-none transition-colors ${
                     isOverLimit
                       ? "border-red-300 focus:border-red-500 bg-red-50"
@@ -320,7 +299,6 @@ export default function ApplyForLoanPage() {
               )}
             </div>
 
-            {/* Submit Area */}
             <div className="pt-4 flex items-center gap-4">
               <button
                 type="submit"
@@ -358,7 +336,6 @@ export default function ApplyForLoanPage() {
           </form>
         </div>
 
-        {/* RIGHT PANEL: Live Summary */}
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="bg-[#f8f9fe] border border-slate-200 rounded-sm overflow-hidden shadow-sm sticky top-6">
             <div className="bg-[#1b5e3a] px-6 py-4">

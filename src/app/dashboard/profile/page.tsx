@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -15,13 +15,11 @@ export default function ProfileBioDataPage() {
     (l: any) => l.status === "APPROVED",
   ).length;
 
-  // Local State for User Bio-Data & Modals
   const [user, setUser] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
 
-  // 🚀 NEW: Image Upload State
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
@@ -45,34 +43,26 @@ export default function ProfileBioDataPage() {
     return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}`;
   };
 
-  // 🚀 NEW: Image Upload Handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size against backend limit (5MB)
     if (file.size > 5 * 1024 * 1024) {
       return toast.error("Image is too large. Must be less than 5MB.");
     }
 
     setIsUploadingImage(true);
     try {
-      const token = localStorage.getItem("coop_token");
       const formData = new FormData();
-      formData.append("image", file); // Must match 'upload.single("image")' on backend
+      formData.append("image", file);
 
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
+      // 🚀 Clean apiClient call, but keep Content-Type for the file
+      const res = await apiClient.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
-      // Update the local form state with the new Cloudinary URL
       setEditForm({ ...editForm, avatarUrl: res.data.url });
       toast.success("Image uploaded! Don't forget to save your changes.");
     } catch (error: any) {
@@ -86,12 +76,8 @@ export default function ProfileBioDataPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const token = localStorage.getItem("coop_token");
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
-        editForm,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      // 🚀 Clean apiClient call
+      const res = await apiClient.put("/auth/profile", editForm);
 
       localStorage.setItem("coop_user", JSON.stringify(res.data));
       setUser(res.data);
@@ -237,7 +223,6 @@ export default function ProfileBioDataPage() {
 
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-8 flex flex-col gap-6">
-          {/* Top 3 Stat Cards */}
           <div className="bg-white rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-0 border border-slate-200 shadow-sm divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             <div className="p-6 flex flex-col items-center justify-center text-center">
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
@@ -271,7 +256,6 @@ export default function ProfileBioDataPage() {
             </div>
           </div>
 
-          {/* Bio Data Section */}
           <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 pb-4 gap-4">
               <div>
@@ -404,7 +388,6 @@ export default function ProfileBioDataPage() {
               onSubmit={handleUpdateProfile}
               className="p-6 sm:p-8 space-y-5"
             >
-              {/* 🚀 AVATAR UPLOAD UI */}
               <div className="flex flex-col items-center justify-center mb-6">
                 <div className="relative w-24 h-24 rounded-full border-4 border-slate-100 overflow-hidden bg-slate-200 flex items-center justify-center text-3xl font-bold text-slate-500 group shadow-sm">
                   {editForm.avatarUrl || user?.avatarUrl ? (
@@ -417,7 +400,6 @@ export default function ProfileBioDataPage() {
                     editForm.lastName?.charAt(0) || "U"
                   )}
 
-                  {/* Hover Overlay for Uploading */}
                   <label className="absolute inset-0 bg-black/50 hidden group-hover:flex flex-col items-center justify-center cursor-pointer transition-all">
                     <svg
                       className="w-6 h-6 text-white mb-1"

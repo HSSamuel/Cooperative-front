@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
 export default function NotificationsPage() {
@@ -15,13 +15,8 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      // 🚀 Clean apiClient call
+      const res = await apiClient.get("/notifications");
 
       // 🚀 THE FIX: Filter out Login and Logout notifications
       const formattedNotifs = res.data
@@ -61,14 +56,9 @@ export default function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/read-all`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.put("/notifications/read-all", {});
+
       setNotifications(notifications.map((n) => ({ ...n, unread: false })));
       toast.success("All notifications marked as read.");
     } catch (error) {
@@ -78,14 +68,9 @@ export default function NotificationsPage() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}/read`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.put(`/notifications/${id}/read`, {});
+
       setNotifications(
         notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)),
       );
@@ -96,13 +81,9 @@ export default function NotificationsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const token = localStorage.getItem("coop_token");
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      // 🚀 Clean apiClient call
+      await apiClient.delete(`/notifications/${id}`);
+
       setNotifications(notifications.filter((n) => n.id !== id));
       toast.success("Alert permanently deleted.");
     } catch (error) {

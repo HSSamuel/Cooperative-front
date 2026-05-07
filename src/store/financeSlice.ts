@@ -1,24 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 
 // Async Thunk to fetch all financial data concurrently
 export const fetchFinancialData = createAsyncThunk(
   "finance/fetchData",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("coop_token");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
       const [accountRes, loansRes, txnRes] = await Promise.all([
-        axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/account/my-account`,
-          config,
-        ),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/loans/my-loans`, config),
-        axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/account/transactions`,
-          config,
-        ),
+        apiClient.get("/account/my-account"),
+        apiClient.get("/loans/my-loans"),
+        apiClient.get("/account/transactions"),
       ]);
 
       return {

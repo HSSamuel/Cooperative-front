@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,12 +18,16 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        { fileNumber, password },
-      );
-      localStorage.setItem("coop_token", response.data.token);
+      // 🚀 Clean apiClient call
+      const response = await apiClient.post("/auth/login", {
+        fileNumber,
+        password,
+      });
+
+      // 🚀 Token is now securely stored in an HttpOnly cookie by the backend!
+      // We only store the non-sensitive user profile data in localStorage.
       localStorage.setItem("coop_user", JSON.stringify(response.data.user));
+
       toast.success("Welcome back!");
       if (
         response.data.user.role === "ADMIN" ||
@@ -43,7 +47,7 @@ export default function LoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
-          className="flex items-center gap-3 hover:opacity-80 transition w-full"
+          className="flex items-center justify-center gap-3 hover:opacity-80 transition w-full"
         >
           <Image
             src="/ascon-logo.png"
