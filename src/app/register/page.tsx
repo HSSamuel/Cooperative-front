@@ -50,20 +50,20 @@ export default function RegisterPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
-          className="flex items-center gap-3 hover:opacity-80 transition"
+          className="flex items-center gap-3 hover:opacity-80 transition w-full"
         >
           <Image
             src="/ascon-logo.png"
             alt="ASCON Logo"
-            width={40}
-            height={40}
+            width={44}
+            height={44}
             className="object-contain w-auto h-auto"
           />
           <div className="flex flex-col">
-            <span className="font-extrabold text-[10px] tracking-tight text-slate-500 uppercase leading-tight">
-              System Demo
+            <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 uppercase leading-tight">
+              ASCON
             </span>
-            <span className="font-bold text-lg tracking-tight text-[#2B2F42] leading-tight">
+            <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] leading-tight">
               Co-operative
             </span>
           </div>

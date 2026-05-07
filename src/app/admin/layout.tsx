@@ -80,20 +80,23 @@ export default function AdminLayout({
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         <div className="h-20 flex items-center justify-center px-4 border-b border-[#313140] flex-shrink-0 bg-white">
-          <Link href="/admin" className="flex items-center gap-3 w-full">
+          <Link
+            href="/"
+            className="flex items-center gap-3 hover:opacity-80 transition w-full"
+          >
             <Image
               src="/ascon-logo.png"
               alt="ASCON Logo"
-              width={40}
-              height={40}
+              width={44}
+              height={44}
               className="object-contain w-auto h-auto"
             />
             <div className="flex flex-col">
-              <span className="font-extrabold text-[10px] tracking-tight text-slate-800 uppercase leading-tight">
-                System Demo
+              <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 uppercase leading-tight">
+                ASCON
               </span>
-              <span className="font-bold text-lg tracking-tight text-[#1b5e3a] leading-tight">
-                Admin Console
+              <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] leading-tight">
+                Co-operative
               </span>
             </div>
           </Link>

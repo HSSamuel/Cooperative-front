@@ -83,7 +83,7 @@ export default function SavingsPage() {
 
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amountInKobo = parseInt(depositAmount) * 100;
+    const amountInKobo = Math.round((parseFloat(depositAmount) || 0) * 100);
 
     if (isNaN(amountInKobo) || amountInKobo <= 0) {
       return toast.error("Please enter a valid amount.");
@@ -94,7 +94,10 @@ export default function SavingsPage() {
       const token = localStorage.getItem("coop_token");
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/account/deposit`,
-        { amountInKobo },
+        {
+          amountInKobo,
+          targetUserId: user._id || user.id,
+        },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
@@ -110,7 +113,6 @@ export default function SavingsPage() {
     }
   };
 
-  // 🚀 NEW LOGIC: Calculate exactly how much they saved THIS month
   const currentMonthString = new Date().toLocaleString("en-GB", {
     month: "long",
     year: "numeric",
@@ -146,7 +148,6 @@ export default function SavingsPage() {
             <p className="text-sm text-slate-500 italic">Account Balance</p>
           </div>
 
-          {/* 🚀 UPDATED: Live Current Monthly Savings (Uneditable) */}
           <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
             <div className="flex items-start justify-center gap-1 mb-2">
               <span className="text-xl font-medium text-slate-500 mt-1">₦</span>
@@ -405,6 +406,7 @@ export default function SavingsPage() {
                     min="100"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()} // 🚀 THE FIX: Prevents scroll-wheel modifications
                     className="w-full pl-8 pr-3 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a]"
                     placeholder="e.g. 50000"
                   />

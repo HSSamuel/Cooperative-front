@@ -23,28 +23,32 @@ export default function NotificationsPage() {
         },
       );
 
-      // Map MongoDB document to our UI structure
-      const formattedNotifs = res.data.map((n: any) => {
-        const dateObj = new Date(n.createdAt);
-        return {
-          id: n._id,
-          title: n.title,
-          message: n.message,
-          // E.g. "May 2, 2026"
-          date: dateObj.toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
-          // E.g. "02:23 AM"
-          time: dateObj.toLocaleTimeString(undefined, {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          unread: !n.isRead,
-          type: n.type || "info",
-        };
-      });
+      // 🚀 THE FIX: Filter out Login and Logout notifications
+      const formattedNotifs = res.data
+        .filter(
+          (n: any) =>
+            !n.title.toLowerCase().includes("login") &&
+            !n.title.toLowerCase().includes("logout"),
+        )
+        .map((n: any) => {
+          const dateObj = new Date(n.createdAt);
+          return {
+            id: n._id,
+            title: n.title,
+            message: n.message,
+            date: dateObj.toLocaleDateString(undefined, {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            time: dateObj.toLocaleTimeString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            unread: !n.isRead,
+            type: n.type || "info",
+          };
+        });
 
       setNotifications(formattedNotifs);
     } catch (error) {
@@ -109,7 +113,6 @@ export default function NotificationsPage() {
   const filteredNotifications =
     filter === "ALL" ? notifications : notifications.filter((n) => n.unread);
 
-  // Dynamically renders icons based on the backend Notification schema 'type' enum
   const getIcon = (type: string) => {
     switch (type) {
       case "success":
@@ -161,7 +164,7 @@ export default function NotificationsPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
               />
             </svg>
           </div>
@@ -185,7 +188,6 @@ export default function NotificationsPage() {
           </div>
         );
       default:
-        // Default "info" styling
         return (
           <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
             <svg
@@ -235,7 +237,6 @@ export default function NotificationsPage() {
 
   return (
     <div className="animate-fade-in-up pb-10 max-w-4xl mx-auto">
-      {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
@@ -285,7 +286,6 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* NOTIFICATIONS LIST */}
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
         {filteredNotifications.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
@@ -308,8 +308,8 @@ export default function NotificationsPage() {
               You're all caught up!
             </h3>
             <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-              There are no {filter === "UNREAD" ? "unread " : ""}notifications
-              to display right now.
+              There are no {filter === "UNREAD" ? "unread " : ""}transaction
+              notifications to display right now.
             </p>
           </div>
         ) : (
@@ -319,15 +319,10 @@ export default function NotificationsPage() {
                 key={notif.id}
                 className={`p-6 sm:p-8 flex flex-col sm:flex-row gap-4 sm:gap-6 transition-colors group relative ${notif.unread ? "bg-emerald-50/20" : "hover:bg-slate-50/50"}`}
               >
-                {/* Unread Indicator Dot */}
                 {notif.unread && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
                 )}
-
-                {/* Left Side: Icon */}
                 {getIcon(notif.type)}
-
-                {/* Middle: Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 mb-2">
                     <h3
@@ -348,7 +343,6 @@ export default function NotificationsPage() {
                   </p>
                 </div>
 
-                {/* Right Side: Actions */}
                 <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-slate-100 sm:border-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity gap-2">
                   {notif.unread ? (
                     <button

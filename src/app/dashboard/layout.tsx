@@ -7,6 +7,9 @@ import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useSocket } from "../../hooks/useSocket";
+import { useDispatch } from "react-redux";
+import { fetchFinancialData, clearFinanceData } from "../../store/financeSlice";
+import type { AppDispatch } from "../../store";
 
 export default function DashboardLayout({
   children,
@@ -16,6 +19,7 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [user, setUser] = useState<any>({
     firstName: "Member",
@@ -42,23 +46,30 @@ export default function DashboardLayout({
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
-        const formattedNotifs = res.data.map((n: any) => {
-          const dateObj = new Date(n.createdAt);
-          return {
-            id: n._id,
-            title: n.title,
-            message: n.message,
-            time:
-              dateObj.toLocaleDateString() +
-              " " +
-              dateObj.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            unread: !n.isRead,
-            type: n.type || "info",
-          };
-        });
+        // 🚀 THE FIX: Filter out Login and Logout notifications
+        const formattedNotifs = res.data
+          .filter(
+            (n: any) =>
+              !n.title.toLowerCase().includes("login") &&
+              !n.title.toLowerCase().includes("logout"),
+          )
+          .map((n: any) => {
+            const dateObj = new Date(n.createdAt);
+            return {
+              id: n._id,
+              title: n.title,
+              message: n.message,
+              time:
+                dateObj.toLocaleDateString() +
+                " " +
+                dateObj.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              unread: !n.isRead,
+              type: n.type || "info",
+            };
+          });
 
         setNotifications(formattedNotifs);
       } catch (error) {
@@ -80,10 +91,12 @@ export default function DashboardLayout({
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       fetchNotifications();
+
+      dispatch(fetchFinancialData());
     } else {
       router.push("/login");
     }
-  }, [router]);
+  }, [router, dispatch]);
 
   const fetchNotifications = async () => {
     try {
@@ -93,19 +106,26 @@ export default function DashboardLayout({
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      const formattedNotifs = res.data.map((n: any) => ({
-        id: n._id,
-        title: n.title,
-        message: n.message,
-        time: new Date(n.createdAt).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        unread: !n.isRead,
-        type: n.type || "info",
-      }));
+      // 🚀 THE FIX: Filter out Login and Logout notifications
+      const formattedNotifs = res.data
+        .filter(
+          (n: any) =>
+            !n.title.toLowerCase().includes("login") &&
+            !n.title.toLowerCase().includes("logout"),
+        )
+        .map((n: any) => ({
+          id: n._id,
+          title: n.title,
+          message: n.message,
+          time: new Date(n.createdAt).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          unread: !n.isRead,
+          type: n.type || "info",
+        }));
       setNotifications(formattedNotifs);
     } catch (error) {
       console.error("Failed to load notifications", error);
@@ -115,6 +135,7 @@ export default function DashboardLayout({
   const handleLogout = () => {
     localStorage.removeItem("coop_token");
     localStorage.removeItem("coop_user");
+    dispatch(clearFinanceData());
     router.push("/login");
   };
 
@@ -153,26 +174,28 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* 🚀 GRAND COLOR APPLIED: THE ASCON GREEN SIDEBAR */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-[#1b5e3a] text-white flex flex-col border-r border-[#124228] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
           w-72 lg:w-64 lg:sticky lg:top-0 lg:h-screen
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         <div className="h-16 flex items-center justify-center px-4 border-b border-[#124228] flex-shrink-0 bg-white">
-          <Link href="/dashboard" className="flex items-center gap-3 w-full">
+          <Link
+            href="/"
+            className="flex items-center gap-3 hover:opacity-80 transition w-full"
+          >
             <Image
               src="/ascon-logo.png"
               alt="ASCON Logo"
-              width={36}
-              height={36}
+              width={44}
+              height={44}
               className="object-contain w-auto h-auto"
             />
             <div className="flex flex-col">
-              <span className="font-extrabold text-[10px] tracking-tight text-slate-500 uppercase leading-tight">
-                System Demo
+              <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 uppercase leading-tight">
+                ASCON
               </span>
-              <span className="font-bold text-lg tracking-tight text-[#1b5e3a] leading-tight">
+              <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] leading-tight">
                 Co-operative
               </span>
             </div>
@@ -287,25 +310,6 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-4 sm:gap-6">
-            <span className="hidden sm:block text-sm font-bold text-slate-500 uppercase tracking-widest">
-              DMSC
-            </span>
-            <button className="text-slate-400 hover:text-[#1b5e3a] transition-colors hidden sm:block">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                />
-              </svg>
-            </button>
-
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -380,9 +384,23 @@ export default function DashboardLayout({
               )}
             </div>
 
+            {/* 🚀 THE FIX: ADDED USER NAME & ROLE NEXT TO AVATAR */}
             <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
-              <Link href="/dashboard/profile">
-                <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 shadow-sm overflow-hidden flex items-center justify-center font-bold text-slate-500">
+              <Link
+                href="/dashboard/profile"
+                className="flex items-center gap-3"
+              >
+                {/* Text section visible on desktop, hidden on mobile */}
+                <div className="text-right hidden md:block">
+                  <p className="text-sm font-bold text-slate-800">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-[10px] font-bold text-[#1b5e3a] uppercase tracking-widest">
+                    {user.role ? user.role.replace("_", " ") : "COOPERATOR"}
+                  </p>
+                </div>
+
+                <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 shadow-sm overflow-hidden flex items-center justify-center font-bold text-slate-500 relative">
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -392,8 +410,8 @@ export default function DashboardLayout({
                   ) : (
                     user.lastName?.charAt(0) || "U"
                   )}
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#20C997] rounded-full border-2 border-white"></span>
                 </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#20C997] rounded-full border-2 border-white"></span>
               </Link>
             </div>
           </div>

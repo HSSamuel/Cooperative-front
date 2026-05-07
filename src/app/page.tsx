@@ -22,7 +22,7 @@ export default function Home() {
                 className="object-contain w-auto h-auto"
               />
               <div className="flex flex-col">
-                <span className="font-extrabold text-[10px] tracking-tight text-slate-500 uppercase leading-tight">
+                <span className="font-extrabold text-[15px] tracking-tight text-slate-500 uppercase leading-tight">
                   ASCON
                 </span>
                 <span className="font-bold text-lg tracking-tight text-[#1b5e3a] leading-tight">
