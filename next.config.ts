@@ -7,14 +7,15 @@ const withPWA = withPWAInit({
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
   swcMinify: true,
-  disable: process.env.NODE_ENV === "development", // Only runs PWA in production
+  disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
   },
 });
 
 const nextConfig: NextConfig = {
-  /* existing config options here */
+  // Add this line to explicitly silence the Next.js 16 Turbopack conflict
+  turbopack: {}, 
 };
 
 export default withPWA(nextConfig);
