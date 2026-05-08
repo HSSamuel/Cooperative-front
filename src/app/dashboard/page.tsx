@@ -25,15 +25,18 @@ export default function DashboardOverview() {
   useEffect(() => {
     const storedUser = localStorage.getItem("coop_user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
     }
   }, []);
 
-  // 🚀 NEW: Watch the live Redux account state for the fresh join date
+  // 🚀 FIX: Used nullish coalescing and Date.now() fallback to satisfy TypeScript
   useEffect(() => {
     if (account && account.cooperatorId) {
       const joinDate = new Date(
-        account.cooperatorId.dateJoined || account.cooperatorId.createdAt
+        account.cooperatorId.dateJoined ??
+          account.cooperatorId.createdAt ??
+          Date.now(),
       );
       const endDate = new Date(joinDate);
       endDate.setMonth(endDate.getMonth() + 6);
@@ -101,7 +104,7 @@ export default function DashboardOverview() {
   return (
     <div className="animate-fade-in-up pb-10">
       <div className="flex flex-col gap-6 w-full">
-       {/* 🚀 PROBATION BANNER: Only displays if user is under 6 months */}
+        {/* 🚀 PROBATION BANNER: Only displays if user is under 6 months */}
         {isUnderProbation && probationEndDate && (
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-sm p-4 flex items-start sm:items-center gap-4 transition-colors shadow-sm">
             <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 p-2.5 rounded-full flex-shrink-0">
@@ -123,7 +126,6 @@ export default function DashboardOverview() {
               <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-0.5">
                 Probation Period Active
               </h4>
-              {/* 🚀 ADDED: text-justify sm:text-left */}
               <p className="text-xs text-amber-700 dark:text-amber-500 leading-relaxed text-justify sm:text-left">
                 As a new cooperator, you must complete your 6-month probation
                 before applying for loan facilities. Your loan privileges will
