@@ -6,7 +6,6 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  // 🚀 FIX: Removed swcMinify from the PWA plugin options
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
@@ -14,9 +13,7 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  turbopack: {},
-  // 🚀 FIX: Moved swcMinify to the top-level Next.js config (though it is true by default in Next.js 14+)
-  swcMinify: true,
+  turbopack: {}, 
 };
 
 export default withPWA(nextConfig);
