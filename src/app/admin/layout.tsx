@@ -122,7 +122,6 @@ export default function AdminLayout({
     setIsNotificationsOpen(!isNotificationsOpen);
   };
 
-  // 🚀 NEW: Manual mark as read logic for the dropdown
   const handleMarkAllRead = async () => {
     try {
       await apiClient.put("/notifications/read-all", {});
@@ -134,6 +133,19 @@ export default function AdminLayout({
 
   const handleExitConsole = () => {
     router.push("/dashboard");
+  };
+
+  // 🚀 FIX: Added the proper Logout function for the Admin panel to destroy the Netlify cookie
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+    localStorage.removeItem("coop_user");
+    document.cookie =
+      "coop_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
+    router.push("/login");
   };
 
   const navItems = [
@@ -226,6 +238,7 @@ export default function AdminLayout({
             );
           })}
           <div className="my-4 border-t border-[#313140] mx-4"></div>
+
           <button
             onClick={handleExitConsole}
             className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-[#00B5E2] hover:bg-white/5 hover:text-[#00B5E2] font-medium"
@@ -245,6 +258,29 @@ export default function AdminLayout({
             </svg>
             <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
               Exit to Coop View
+            </span>
+          </button>
+
+          {/* 🚀 FIX: Added the Logout Button specifically for Admins */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-red-400 hover:bg-white/5 hover:text-red-300 font-medium"
+          >
+            <svg
+              className="w-5 h-5 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+            <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+              Log Out
             </span>
           </button>
         </nav>
@@ -321,7 +357,6 @@ export default function AdminLayout({
                       <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
                         Notifications
                       </h3>
-                      {/* 🚀 ADDED MARK ALL READ TO DROPDOWN */}
                       {unreadCount > 0 && (
                         <button
                           onClick={handleMarkAllRead}

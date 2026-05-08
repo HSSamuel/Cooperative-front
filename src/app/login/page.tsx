@@ -27,6 +27,7 @@ function LoginForm() {
         password,
       });
       localStorage.setItem("coop_user", JSON.stringify(response.data.user));
+      document.cookie = `coop_token=${response.data.token}; path=/; max-age=86400; Secure; SameSite=Lax`;
       toast.success("Welcome back!");
 
       // 🚀 FIX: Check for the redirect parameter and route dynamically

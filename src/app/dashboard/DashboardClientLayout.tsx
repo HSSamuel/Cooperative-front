@@ -141,16 +141,21 @@ export default function DashboardClientLayout({
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await apiClient.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error", error);
-    }
-    localStorage.removeItem("coop_user");
-    dispatch(clearFinanceData());
-    router.push("/login");
-  };
+ const handleLogout = async () => {
+   try {
+     await apiClient.post("/auth/logout");
+   } catch (error) {
+     console.error("Logout error", error);
+   }
+   localStorage.removeItem("coop_user");
+
+   // 🚀 FIX: Destroy the frontend cookie
+   document.cookie =
+     "coop_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
+
+   dispatch(clearFinanceData());
+   router.push("/login");
+ };
 
   const handleToggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);

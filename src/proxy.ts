@@ -1,9 +1,8 @@
-// frontend/src/proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
-  // Check for the HttpOnly cookie set by your backend
+export function middleware(request: NextRequest) {
+  // Check for the HttpOnly cookie set by the backend (or the document.cookie frontend fallback)
   const token = request.cookies.get("coop_token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -24,7 +23,7 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Ensure the proxy only runs on necessary routes to save edge compute
+// Ensure the middleware only runs on necessary routes to save edge compute
 export const config = {
   matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/register"],
 };
