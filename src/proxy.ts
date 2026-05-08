@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+// 🚀 FIX: Changed from 'export function middleware' to 'export default function proxy'
+export default function proxy(request: NextRequest) {
   // Check for the HttpOnly cookie set by the backend (or the document.cookie frontend fallback)
   const token = request.cookies.get("coop_token")?.value;
   const { pathname } = request.nextUrl;
@@ -23,7 +24,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Ensure the middleware only runs on necessary routes to save edge compute
+// Ensure the proxy only runs on necessary routes to save edge compute
 export const config = {
   matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/register"],
 };
