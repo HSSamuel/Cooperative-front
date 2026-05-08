@@ -1,15 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import StoreProvider from "./StoreProvider";
-import { ThemeProvider } from "@/components/ThemeProvider"; // <-- Import ThemeProvider
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ASCON Cooperative",
   description: "ASCON STAFF Multi-Purpose Co-operative Society",
+  manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1b5e3a",
 };
 
 export default function RootLayout({
@@ -22,6 +28,7 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider>
           <Toaster position="top-center" />
+          <InstallPrompt />
           <StoreProvider>{children}</StoreProvider>
         </ThemeProvider>
       </body>

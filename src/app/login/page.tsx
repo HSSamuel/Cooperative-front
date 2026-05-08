@@ -26,23 +26,36 @@ function LoginForm() {
         fileNumber,
         password,
       });
+
+      // 1. Safety check to ensure the backend actually sent the token
+      const token = response.data.token;
+      if (!token) {
+        toast.error(
+          "Backend missing token. Ensure backend changes are deployed.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
       localStorage.setItem("coop_user", JSON.stringify(response.data.user));
-      document.cookie = `coop_token=${response.data.token}; path=/; max-age=86400; Secure; SameSite=Lax`;
+
+      // 2. Set the cookie explicitly
+      document.cookie = `coop_token=${token}; path=/; max-age=86400; Secure; SameSite=Lax`;
+
       toast.success("Welcome back!");
 
-      // 🚀 FIX: Check for the redirect parameter and route dynamically
       const redirectUrl = searchParams.get("redirect");
 
+      // 3. USE window.location.href INSTEAD OF router.push()
       if (redirectUrl) {
-        // Decode it just in case and push them back to their task
-        router.push(decodeURIComponent(redirectUrl));
+        window.location.href = decodeURIComponent(redirectUrl);
       } else if (
         response.data.user.role === "ADMIN" ||
         response.data.user.role === "SUPER_ADMIN"
       ) {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Invalid credentials.");
