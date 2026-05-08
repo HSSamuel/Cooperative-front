@@ -3,8 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { fetchFinancialData } from "@/store/financeSlice";
+import type { AppDispatch } from "@/store";
 
 export default function SavingsPage() {
+  const dispatch = useDispatch<AppDispatch>();
   const [account, setAccount] = useState({
     totalSavings: 0,
     availableCreditLimit: 0,
@@ -88,7 +92,10 @@ export default function SavingsPage() {
       setIsAddModalOpen(false);
       setDepositAmount("");
 
+      // 1. Updates the local page data
       await fetchAccountData();
+      // 2. 🚀 THE FIX: Updates the global Redux state so the Profile page instantly reflects the deposit
+      dispatch(fetchFinancialData());
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Deposit failed.");
     } finally {

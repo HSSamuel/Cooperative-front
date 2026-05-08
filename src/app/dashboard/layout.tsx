@@ -136,6 +136,21 @@ export default function DashboardLayout({
     router.push("/login");
   };
 
+  const handleToggleNotifications = async () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+
+    // If we are opening the panel and there are unread notifications, clear them instantly
+    if (!isNotificationsOpen && unreadCount > 0) {
+      try {
+        await apiClient.put("/notifications/read-all", {});
+        // Update local state to remove the red badge immediately
+        setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+      } catch (error) {
+        console.error("Failed to mark notifications as read", error);
+      }
+    }
+  };
+
   const navItems = [
     {
       name: "Dashboard",
@@ -173,22 +188,22 @@ export default function DashboardLayout({
 
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-[#1b5e3a] text-white flex flex-col border-r border-[#124228] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
-          w-72 lg:w-64 lg:sticky lg:top-0 lg:h-screen
+          w-72 lg:w-20 lg:hover:w-64 lg:sticky lg:top-0 lg:h-screen
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         <div className="h-16 flex items-center justify-center px-4 border-b border-[#124228] flex-shrink-0 bg-white">
           <Link
             href="/"
-            className="flex items-center gap-3 hover:opacity-80 transition w-full"
+            className="flex items-center gap-3 hover:opacity-80 transition w-full overflow-hidden"
           >
             <Image
               src="/ascon-logo.png"
               alt="ASCON Logo"
               width={44}
               height={44}
-              className="object-contain w-auto h-auto"
+              className="object-contain w-auto h-auto flex-shrink-0"
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
               <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 uppercase leading-tight">
                 ASCON
               </span>
@@ -228,7 +243,9 @@ export default function DashboardLayout({
                     d={item.icon}
                   />
                 </svg>
-                <span className="whitespace-nowrap">{item.name}</span>
+                <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+                  {item.name}
+                </span>
               </Link>
             );
           })}
@@ -253,7 +270,9 @@ export default function DashboardLayout({
                     d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
                   />
                 </svg>
-                <span className="whitespace-nowrap">Administration</span>
+                <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+                  Administration
+                </span>
               </Link>
             </>
           )}
@@ -275,7 +294,9 @@ export default function DashboardLayout({
                 d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            <span className="whitespace-nowrap">Log Out</span>
+            <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+              Log Out
+            </span>
           </button>
         </nav>
       </aside>
@@ -309,8 +330,8 @@ export default function DashboardLayout({
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="relative">
               <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative text-slate-400 hover:text-[#1b5e3a] transition-colors"
+                onClick={handleToggleNotifications}
+                className="relative p-1 text-slate-400 hover:text-[#1b5e3a] transition-colors"
               >
                 <svg
                   className="w-6 h-6"
@@ -326,7 +347,9 @@ export default function DashboardLayout({
                   />
                 </svg>
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border-2 border-white shadow-sm">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
                 )}
               </button>
 

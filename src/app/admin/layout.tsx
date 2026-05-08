@@ -76,22 +76,22 @@ export default function AdminLayout({
       {/* ADMIN SIDEBAR */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-[#23232F] text-white flex flex-col border-r border-[#1B1B25] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
-          w-72 lg:w-64 lg:sticky lg:top-0 lg:h-screen
+          w-72 lg:w-20 lg:hover:w-64 lg:sticky lg:top-0 lg:h-screen
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         <div className="h-20 flex items-center justify-center px-4 border-b border-[#313140] flex-shrink-0 bg-white">
           <Link
             href="/"
-            className="flex items-center gap-3 hover:opacity-80 transition w-full"
+            className="flex items-center gap-3 hover:opacity-80 transition w-full overflow-hidden"
           >
             <Image
               src="/ascon-logo.png"
               alt="ASCON Logo"
               width={44}
               height={44}
-              className="object-contain w-auto h-auto"
+              className="object-contain w-auto h-auto flex-shrink-0"
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
               <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 uppercase leading-tight">
                 ASCON
               </span>
@@ -131,7 +131,9 @@ export default function AdminLayout({
                     d={item.icon}
                   />
                 </svg>
-                <span className="whitespace-nowrap">{item.name}</span>
+                <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+                  {item.name}
+                </span>
               </Link>
             );
           })}
@@ -155,7 +157,9 @@ export default function AdminLayout({
                 d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
               />
             </svg>
-            <span className="whitespace-nowrap">Exit to Coop View</span>
+            <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+              Exit to Coop View
+            </span>
           </button>
         </nav>
       </aside>

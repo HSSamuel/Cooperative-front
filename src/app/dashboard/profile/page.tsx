@@ -8,9 +8,11 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 
 export default function ProfileBioDataPage() {
-  const { account, loans, status } = useSelector(
+  // 🚀 THE FIX: Bring in 'transactions' from Redux
+  const { account, loans, transactions, status } = useSelector(
     (state: RootState) => state.finance,
   );
+
   const activeLoansCount = loans.filter(
     (l: any) => l.status === "APPROVED",
   ).length;
@@ -19,7 +21,6 @@ export default function ProfileBioDataPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
-
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
@@ -43,6 +44,19 @@ export default function ProfileBioDataPage() {
     return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}`;
   };
 
+  // 🚀 THE FIX: Calculate actual deposits made in the current month
+  const currentMonthString = new Date().toLocaleString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const currentMonthSavings = transactions
+    .filter(
+      (txn: any) =>
+        txn.type === "CREDIT" && txn.effectiveMonth === currentMonthString,
+    )
+    .reduce((sum: number, txn: any) => sum + txn.amount, 0);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -56,7 +70,6 @@ export default function ProfileBioDataPage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      // 🚀 Clean apiClient call, but keep Content-Type for the file
       const res = await apiClient.post("/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -76,7 +89,6 @@ export default function ProfileBioDataPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      // 🚀 Clean apiClient call
       const res = await apiClient.put("/auth/profile", editForm);
 
       localStorage.setItem("coop_user", JSON.stringify(res.data));
@@ -237,12 +249,13 @@ export default function ProfileBioDataPage() {
             </div>
             <div className="p-6 flex flex-col items-center justify-center text-center bg-slate-50/50">
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Mo. Contribution
+                {/* 🚀 THE FIX: Renamed and wired to Live Redux Transaction Ledger */}
+                Saved This Month
               </p>
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-sm font-bold text-slate-400">₦</span>
                 <h3 className="text-2xl font-black text-slate-800 tracking-tight truncate max-w-[150px] sm:max-w-full">
-                  {formatNaira(account.customMonthlySavings || 15000000)}
+                  {formatNaira(currentMonthSavings)}
                 </h3>
               </div>
             </div>
