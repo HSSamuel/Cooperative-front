@@ -10,7 +10,8 @@ export default function proxy(request: NextRequest) {
   // Protect private routes
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      // Temporarily comment this out to test
+      // return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
