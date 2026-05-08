@@ -1,6 +1,40 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/lib/axios";
 
+// 🚀 FIX: Define the explicit shape of the state so TypeScript knows cooperatorId exists
+interface Cooperator {
+  dateJoined?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
+
+interface AccountState {
+  totalSavings: number;
+  availableCreditLimit: number;
+  customMonthlySavings: number;
+  cooperatorId?: Cooperator;
+}
+
+interface FinanceState {
+  account: AccountState;
+  loans: any[];
+  transactions: any[];
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
+}
+
+const initialState: FinanceState = {
+  account: {
+    totalSavings: 0,
+    availableCreditLimit: 0,
+    customMonthlySavings: 0,
+  },
+  loans: [],
+  transactions: [],
+  status: "idle",
+  error: null,
+};
+
 // Async Thunk to fetch all financial data concurrently
 export const fetchFinancialData = createAsyncThunk(
   "finance/fetchData",
@@ -27,17 +61,7 @@ export const fetchFinancialData = createAsyncThunk(
 
 const financeSlice = createSlice({
   name: "finance",
-  initialState: {
-    account: {
-      totalSavings: 0,
-      availableCreditLimit: 0,
-      customMonthlySavings: 0,
-    },
-    loans: [],
-    transactions: [],
-    status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
-    error: null as string | null,
-  },
+  initialState,
   reducers: {
     // Allows us to clear data on logout
     clearFinanceData: (state) => {
