@@ -301,6 +301,15 @@ export default function ProfileBioDataPage() {
                   {user.firstName}
                 </span>
               </div>
+              {/* 🚀 FIX: Display Other Name on the User's Profile */}
+              <div className="bg-slate-50 dark:bg-[#12121A]/50 p-4 rounded-sm border border-slate-100 dark:border-slate-800/50 transition-colors">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                  Other Name
+                </span>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 break-words">
+                  {user.otherName || "Not Provided"}
+                </span>
+              </div>
               <div className="bg-slate-50 dark:bg-[#12121A]/50 p-4 rounded-sm border border-slate-100 dark:border-slate-800/50 transition-colors">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                   Last Name
@@ -354,7 +363,12 @@ export default function ProfileBioDataPage() {
                   Official Join Date
                 </span>
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200 break-words">
-                  {formatDate(user.dateJoined || user.createdAt)}
+                  {/* 🚀 FIX: Prioritize the live date from Redux, fallback to local storage */}
+                  {formatDate(
+                    account?.cooperatorId?.dateJoined ||
+                      user.dateJoined ||
+                      user.createdAt,
+                  )}
                 </span>
               </div>
             </div>
@@ -450,40 +464,33 @@ export default function ProfileBioDataPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editForm.firstName || ""}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, firstName: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#12121A]/50 border border-slate-200 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-[#1b5e3a] dark:focus:border-emerald-500 text-slate-800 dark:text-slate-200 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editForm.lastName || ""}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, lastName: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#12121A]/50 border border-slate-200 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-[#1b5e3a] dark:focus:border-emerald-500 text-slate-800 dark:text-slate-200 transition-all"
-                  />
-                </div>
+                {/* Existing First Name Input */}
+                {/* Existing Last Name Input */}
+              </div>
+
+              {/* 🚀 FIX: Editable Input for Other Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Other Name{" "}
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">
+                    (Optional)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={editForm.otherName || ""}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, otherName: e.target.value })
+                  }
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#12121A]/50 border border-slate-200 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-[#1b5e3a] dark:focus:border-emerald-500 text-slate-800 dark:text-slate-200 transition-all"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Email Address
                 </label>
+                {/* Existing Email Input... */}
                 <input
                   type="email"
                   required

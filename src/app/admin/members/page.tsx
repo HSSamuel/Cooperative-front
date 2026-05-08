@@ -159,29 +159,29 @@ export default function MemberDirectoryPage() {
     }
   };
 
- const handleSendNotice = async (e: React.FormEvent) => {
-   e.preventDefault();
-   if (!noticeTitle || !noticeMessage)
-     return toast.error("Please fill out the message.");
-   setIsSendingNotice(true);
-   try {
-     // 🚀 THE FIX: Replace the mock with the real backend endpoint
-     await apiClient.post("/notifications/admin-send", {
-       targetUserId: selectedMember._id,
-       title: noticeTitle,
-       message: noticeMessage,
-       type: "system",
-     });
+  const handleSendNotice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noticeTitle || !noticeMessage)
+      return toast.error("Please fill out the message.");
+    setIsSendingNotice(true);
+    try {
+      // 🚀 THE FIX: Replace the mock with the real backend endpoint
+      await apiClient.post("/notifications/admin-send", {
+        targetUserId: selectedMember._id,
+        title: noticeTitle,
+        message: noticeMessage,
+        type: "system",
+      });
 
-     toast.success("In-app notification sent to the member.");
-     setNoticeTitle("");
-     setNoticeMessage("");
-   } catch (error: any) {
-     toast.error(error.response?.data?.message || "Failed to send notice.");
-   } finally {
-     setIsSendingNotice(false);
-   }
- };
+      toast.success("In-app notification sent to the member.");
+      setNoticeTitle("");
+      setNoticeMessage("");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to send notice.");
+    } finally {
+      setIsSendingNotice(false);
+    }
+  };
 
   const handlePasswordResetTrigger = async () => {
     if (!window.confirm("Send a password reset link to this user's email?"))
@@ -323,8 +323,10 @@ export default function MemberDirectoryPage() {
                         )}
                       </div>
                       <div>
+                        {/* 🚀 FIX: Appended member.otherName to the table row */}
                         <div className="font-semibold text-slate-800 dark:text-slate-200">
-                          {member.lastName} {member.firstName}
+                          {member.lastName} {member.firstName}{" "}
+                          {member.otherName || ""}
                         </div>
                         <div className="text-[10px] text-slate-500 dark:text-slate-400">
                           {member.email}
@@ -378,8 +380,13 @@ export default function MemberDirectoryPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
+                    {/* 🚀 FIX: Injected the Other Name into the Modal Header */}
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 leading-none">
-                      {selectedMember.firstName} {selectedMember.lastName}
+                      {selectedMember.firstName}{" "}
+                      {selectedMember.otherName
+                        ? `${selectedMember.otherName} `
+                        : ""}
+                      {selectedMember.lastName}
                     </h2>
                     {memberAccount?.status === "ACTIVE" ? (
                       <span
@@ -454,6 +461,15 @@ export default function MemberDirectoryPage() {
                           </p>
                           <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                             {selectedMember.firstName}
+                          </p>
+                        </div>
+                        {/* 🚀 FIX: Added Other Name block to the Bio-Data Grid */}
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
+                            Other Name
+                          </p>
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {selectedMember.otherName || "N/A"}
                           </p>
                         </div>
                         <div>

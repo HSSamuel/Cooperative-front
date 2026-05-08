@@ -172,8 +172,9 @@ function ActionProcessor() {
               Authentication Required
             </h3>
             <p className="text-sm text-slate-500 mb-6">{message}</p>
+            {/* 🚀 FIX: Safely URI encode the redirect URL */}
             <Link
-              href="/login"
+              href={`/login?redirect=${encodeURIComponent(`/action/guarantee?loanId=${searchParams.get("loanId")}&action=${searchParams.get("action")}`)}`}
               className="w-full inline-flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 transition-colors"
             >
               Log in to continue
@@ -189,7 +190,7 @@ export default function GuaranteeActionPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold text-slate-500">
           Loading secure portal...
         </div>
       }
