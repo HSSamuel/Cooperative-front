@@ -49,7 +49,6 @@ export default function SavingsPage() {
         return sum + (targetRepayment - amountRepaid);
       }, 0);
       setOutstandingLoanBalance(totalOutstanding);
-
       setTransactions(txnRes.data);
     } catch (error) {
       console.error("Error fetching account data", error);
@@ -91,10 +90,7 @@ export default function SavingsPage() {
       toast.success("Deposit successful!");
       setIsAddModalOpen(false);
       setDepositAmount("");
-
-      // 1. Updates the local page data
       await fetchAccountData();
-      // 2. 🚀 THE FIX: Updates the global Redux state so the Profile page instantly reflects the deposit
       dispatch(fetchFinancialData());
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Deposit failed.");
@@ -117,8 +113,8 @@ export default function SavingsPage() {
   if (isLoading) {
     return (
       <div className="animate-pulse flex flex-col gap-6 h-[800px] w-full">
-        <div className="h-40 bg-slate-200 rounded-sm w-full"></div>
-        <div className="h-[500px] bg-slate-200 rounded-sm w-full"></div>
+        <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-sm w-full"></div>
+        <div className="h-[500px] bg-slate-200 dark:bg-slate-800 rounded-sm w-full"></div>
       </div>
     );
   }
@@ -126,52 +122,60 @@ export default function SavingsPage() {
   return (
     <div className="animate-fade-in-up pb-10 relative">
       <div className="flex flex-col gap-6 w-full">
+        {/* Top 3 Cards Box */}
         <div className="bg-[#1b5e3a] p-6 rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-6 shadow-md border border-[#124228]">
-          <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
+          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm transition-colors">
             <div className="flex items-start justify-center gap-1 mb-2">
-              <span className="text-xl font-medium text-slate-500 mt-1">₦</span>
-              <h3 className="text-3xl font-bold text-slate-700 tracking-tight">
+              <span className="text-xl font-medium text-slate-500 dark:text-slate-400 mt-1">
+                ₦
+              </span>
+              <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 tracking-tight">
                 {formatNaira(account.totalSavings / 100)}
               </h3>
             </div>
-            <p className="text-sm text-slate-500 italic">Account Balance</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+              Account Balance
+            </p>
           </div>
 
-          <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
+          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm transition-colors">
             <div className="flex items-start justify-center gap-1 mb-2">
-              <span className="text-xl font-medium text-slate-500 mt-1">₦</span>
-              <h3 className="text-3xl font-bold text-slate-700 tracking-tight">
+              <span className="text-xl font-medium text-slate-500 dark:text-slate-400 mt-1">
+                ₦
+              </span>
+              <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 tracking-tight">
                 {formatNaira(currentMonthSavings / 100)}
               </h3>
             </div>
-            <p className="text-sm text-slate-500 italic">
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
               Current Monthly Savings
             </p>
           </div>
 
-          <div className="bg-white rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm">
+          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm transition-colors">
             <div className="flex items-start justify-center gap-1 mb-2">
               <span className="text-xl font-medium text-red-400 mt-1">₦</span>
               <h3 className="text-3xl font-bold text-red-500 tracking-tight">
                 {formatNaira(outstandingLoanBalance / 100)}
               </h3>
             </div>
-            <p className="text-sm text-slate-500 italic">
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
               Outstanding Loan Balance
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 w-full">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4">
+        {/* Transaction Ledger Table */}
+        <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 w-full transition-colors">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
             Transaction Ledger
           </h3>
 
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
-              <thead className="bg-slate-50">
+              <thead className="bg-slate-50 dark:bg-[#12121A]/50">
                 <tr>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-center w-28 border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-center w-28 border border-slate-200 dark:border-slate-800">
                     <button
                       onClick={() => setIsAddModalOpen(true)}
                       className="bg-[#1b5e3a] text-white px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full transition-colors hover:bg-[#124228] shadow-sm"
@@ -192,22 +196,22 @@ export default function SavingsPage() {
                       New Deposit
                     </button>
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-sm border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Effective Month
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-sm border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Description
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-sm text-center border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-center border border-slate-200 dark:border-slate-800">
                     Debit
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-sm text-center border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-center border border-slate-200 dark:border-slate-800">
                     Credit
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-sm text-center border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-center border border-slate-200 dark:border-slate-800">
                     Dividends
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 text-sm border border-slate-200">
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Date Modified
                   </th>
                 </tr>
@@ -217,7 +221,7 @@ export default function SavingsPage() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="py-8 text-center text-slate-500 border border-slate-200"
+                      className="py-8 text-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
                     >
                       No transactions recorded yet.
                     </td>
@@ -226,10 +230,10 @@ export default function SavingsPage() {
                   transactions.map((txn) => (
                     <tr
                       key={txn._id}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
                     >
-                      <td className="py-3 px-4 border border-slate-200">
-                        <button className="bg-slate-200 text-slate-500 px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full hover:bg-slate-300 transition-colors shadow-sm cursor-default">
+                      <td className="py-3 px-4 border border-slate-200 dark:border-slate-800">
+                        <button className="bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full shadow-sm cursor-default">
                           <svg
                             className="w-3 h-3"
                             fill="none"
@@ -245,24 +249,24 @@ export default function SavingsPage() {
                           </svg>
                         </button>
                       </td>
-                      <td className="py-3 px-4 text-slate-600 font-medium border border-slate-200">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium border border-slate-200 dark:border-slate-800">
                         {txn.effectiveMonth || "N/A"}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 border border-slate-200">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
                         {txn.description}
                       </td>
-                      <td className="py-3 px-4 text-red-500 text-right font-medium border border-slate-200">
+                      <td className="py-3 px-4 text-red-500 dark:text-red-400 text-right font-medium border border-slate-200 dark:border-slate-800">
                         {txn.type === "DEBIT"
                           ? formatNaira(txn.amount / 100)
                           : ""}
                       </td>
-                      <td className="py-3 px-4 text-[#1b5e3a] text-right font-bold border border-slate-200">
+                      <td className="py-3 px-4 text-[#1b5e3a] dark:text-emerald-400 text-right font-bold border border-slate-200 dark:border-slate-800">
                         {txn.type === "CREDIT"
                           ? formatNaira(txn.amount / 100)
                           : ""}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 text-right border border-slate-200"></td>
-                      <td className="py-3 px-4 text-slate-500 text-[11px] leading-tight border border-slate-200">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-right border border-slate-200 dark:border-slate-800"></td>
+                      <td className="py-3 px-4 text-slate-500 dark:text-slate-500 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
                         {new Date(txn.createdAt).toLocaleDateString()}
                         <br />
                         {new Date(txn.createdAt).toLocaleTimeString()}
@@ -274,10 +278,11 @@ export default function SavingsPage() {
             </table>
           </div>
 
+          {/* Bottom 3 Summary Boxes */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-            <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
+            <div className="bg-[#f8f9fe] dark:bg-[#12121A]/50 p-5 rounded-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-emerald-100 p-2 rounded-sm text-[#1b5e3a]">
+                <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-sm text-[#1b5e3a] dark:text-emerald-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -292,18 +297,18 @@ export default function SavingsPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
                   ₦{formatNaira(account.totalSavings / 100)}
                 </h3>
               </div>
-              <p className="text-slate-500 text-xs font-medium ml-11">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">
                 Total saving
               </p>
             </div>
 
-            <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
+            <div className="bg-[#f8f9fe] dark:bg-[#12121A]/50 p-5 rounded-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-orange-100 p-2 rounded-sm text-orange-500">
+                <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-sm text-orange-500 dark:text-orange-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -318,16 +323,18 @@ export default function SavingsPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">₦0.00</h3>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  ₦0.00
+                </h3>
               </div>
-              <p className="text-slate-500 text-xs font-medium ml-11">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">
                 Total dividends
               </p>
             </div>
 
-            <div className="bg-[#f8f9fe] p-5 rounded-sm border border-slate-100">
+            <div className="bg-[#f8f9fe] dark:bg-[#12121A]/50 p-5 rounded-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-red-100 p-2 rounded-sm text-red-500">
+                <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-sm text-red-500 dark:text-red-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -342,9 +349,11 @@ export default function SavingsPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">₦0.00</h3>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  ₦0.00
+                </h3>
               </div>
-              <p className="text-slate-500 text-xs font-medium ml-11">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">
                 Total debit/ withdrawal
               </p>
             </div>
@@ -354,23 +363,25 @@ export default function SavingsPage() {
 
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
-          <div className="bg-white rounded-sm shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-up">
-            <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
-              <h3 className="font-bold text-slate-800">New Deposit</h3>
+          <div className="bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-up border border-slate-200 dark:border-slate-800">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">
+                New Deposit
+              </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               >
                 <svg
                   className="w-5 h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    strokeWidth={2}
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
@@ -379,7 +390,7 @@ export default function SavingsPage() {
 
             <form onSubmit={handleDeposit} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Amount to Save (₦)
                 </label>
                 <div className="relative">
@@ -393,7 +404,7 @@ export default function SavingsPage() {
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    className="w-full pl-8 pr-3 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a]"
+                    className="w-full pl-8 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 bg-transparent text-slate-800 dark:text-slate-200"
                     placeholder="e.g. 50000"
                   />
                 </div>
@@ -402,11 +413,11 @@ export default function SavingsPage() {
                 </p>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-bold rounded-sm hover:bg-slate-200 transition-colors"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   Cancel
                 </button>

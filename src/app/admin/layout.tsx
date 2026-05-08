@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import apiClient from "@/lib/axios";
+import { useSocket } from "../../hooks/useSocket";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function AdminLayout({
   children,
@@ -16,9 +19,87 @@ export default function AdminLayout({
     lastName: "",
     role: "ADMIN",
     fileNumber: "",
+    _id: "",
+    id: "",
   });
   const pathname = usePathname();
   const router = useRouter();
+
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  const socket = useSocket(adminUser?._id || adminUser?.id);
+
+  useEffect(() => {
+    if (!socket) return;
+    const fetchFreshNotifications = async () => {
+      try {
+        const res = await apiClient.get("/notifications");
+        const formattedNotifs = res.data
+          .filter(
+            (n: any) =>
+              !n.title.toLowerCase().includes("login") &&
+              !n.title.toLowerCase().includes("logout"),
+          )
+          .map((n: any) => {
+            const dateObj = new Date(n.createdAt);
+            return {
+              id: n._id,
+              title: n.title,
+              message: n.message,
+              time:
+                dateObj.toLocaleDateString() +
+                " " +
+                dateObj.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              unread: !n.isRead,
+              type: n.type || "info",
+            };
+          });
+        setNotifications(formattedNotifs);
+      } catch (error) {
+        console.error("Silent fetch failed", error);
+      }
+    };
+
+    socket.on("new_guarantor_request", fetchFreshNotifications);
+    socket.on("update_notifications", fetchFreshNotifications);
+
+    return () => {
+      socket.off("new_guarantor_request", fetchFreshNotifications);
+      socket.off("update_notifications", fetchFreshNotifications);
+    };
+  }, [socket]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await apiClient.get("/notifications");
+      const formattedNotifs = res.data
+        .filter(
+          (n: any) =>
+            !n.title.toLowerCase().includes("login") &&
+            !n.title.toLowerCase().includes("logout"),
+        )
+        .map((n: any) => ({
+          id: n._id,
+          title: n.title,
+          message: n.message,
+          time: new Date(n.createdAt).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          unread: !n.isRead,
+          type: n.type || "info",
+        }));
+      setNotifications(formattedNotifs);
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("coop_user");
@@ -34,7 +115,22 @@ export default function AdminLayout({
     }
 
     setAdminUser(user);
+    fetchNotifications();
   }, [router]);
+
+  const handleToggleNotifications = () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+  };
+
+  // 🚀 NEW: Manual mark as read logic for the dropdown
+  const handleMarkAllRead = async () => {
+    try {
+      await apiClient.put("/notifications/read-all", {});
+      setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    } catch (error) {
+      console.error("Failed to mark read", error);
+    }
+  };
 
   const handleExitConsole = () => {
     router.push("/dashboard");
@@ -63,9 +159,10 @@ export default function AdminLayout({
     },
   ];
 
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
   return (
-    <div className="min-h-screen bg-slate-50 flex overflow-hidden">
-      {/* MOBILE BACKDROP */}
+    <div className="min-h-screen bg-slate-50 dark:bg-[#12121A] flex overflow-hidden transition-colors">
       {isSidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm lg:hidden transition-opacity"
@@ -73,11 +170,8 @@ export default function AdminLayout({
         />
       )}
 
-      {/* ADMIN SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-[#23232F] text-white flex flex-col border-r border-[#1B1B25] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0
-          w-72 lg:w-20 lg:hover:w-64 lg:sticky lg:top-0 lg:h-screen
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        className={`fixed inset-y-0 left-0 z-50 bg-[#23232F] text-white flex flex-col border-r border-[#1B1B25] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 w-72 lg:w-20 lg:hover:w-64 lg:sticky lg:top-0 lg:h-screen ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         <div className="h-20 flex items-center justify-center px-4 border-b border-[#313140] flex-shrink-0 bg-white">
           <Link
@@ -110,16 +204,10 @@ export default function AdminLayout({
                 key={item.name}
                 href={item.href}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-4 px-6 py-3.5 transition-all duration-200 ${
-                  isActive
-                    ? "bg-slate-100 text-slate-800 border-l-4 border-[#1b5e3a] font-bold"
-                    : "text-slate-400 border-l-4 border-transparent hover:bg-white/5 hover:text-white font-medium"
-                }`}
+                className={`flex items-center gap-4 px-6 py-3.5 transition-all duration-200 ${isActive ? "bg-slate-100 text-slate-800 border-l-4 border-[#1b5e3a] font-bold" : "text-slate-400 border-l-4 border-transparent hover:bg-white/5 hover:text-white font-medium"}`}
               >
                 <svg
-                  className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                    isActive ? "text-[#1b5e3a]" : "text-slate-500"
-                  }`}
+                  className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? "text-[#1b5e3a]" : "text-slate-500"}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -137,9 +225,7 @@ export default function AdminLayout({
               </Link>
             );
           })}
-
           <div className="my-4 border-t border-[#313140] mx-4"></div>
-
           <button
             onClick={handleExitConsole}
             className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-[#00B5E2] hover:bg-white/5 hover:text-[#00B5E2] font-medium"
@@ -164,13 +250,12 @@ export default function AdminLayout({
         </nav>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 h-screen overflow-y-auto">
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm h-16 flex-shrink-0 px-4 sm:px-6 lg:px-8 flex items-center justify-between mx-4 mt-4 rounded-sm">
+        <header className="sticky top-0 z-30 bg-white dark:bg-[#1B1B25] border-b border-slate-200 dark:border-slate-800 shadow-sm h-16 flex-shrink-0 px-4 sm:px-6 lg:px-8 flex items-center justify-between mx-4 mt-4 rounded-sm transition-colors">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <svg
                 className="w-6 h-6"
@@ -186,7 +271,7 @@ export default function AdminLayout({
                 />
               </svg>
             </button>
-            <h1 className="text-base sm:text-lg font-bold text-slate-700 tracking-tight hidden sm:block">
+            <h1 className="text-base sm:text-lg font-bold text-slate-700 dark:text-slate-200 tracking-tight hidden sm:block">
               {pathname === "/admin"
                 ? "Command Center"
                 : pathname.includes("members")
@@ -197,12 +282,97 @@ export default function AdminLayout({
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-bold text-slate-800">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <ThemeToggle />
+
+            <div className="relative">
+              <button
+                onClick={handleToggleNotifications}
+                className="relative p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-[#1b5e3a] dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+                  />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border-2 border-white dark:border-[#1B1B25] shadow-sm">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {isNotificationsOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsNotificationsOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 flex justify-between items-center">
+                      <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
+                        Notifications
+                      </h3>
+                      {/* 🚀 ADDED MARK ALL READ TO DROPDOWN */}
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-[10px] font-bold text-[#1b5e3a] dark:text-emerald-400 hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-xs font-medium">
+                          No new notifications.
+                        </div>
+                      ) : (
+                        notifications.slice(0, 5).map((notif) => (
+                          <div
+                            key={notif.id}
+                            className={`p-4 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${notif.unread ? "bg-slate-50/50 dark:bg-emerald-900/10" : ""}`}
+                          >
+                            <h4
+                              className={`text-xs ${notif.unread ? "font-bold text-slate-800 dark:text-slate-200" : "font-medium text-slate-600 dark:text-slate-400"}`}
+                            >
+                              {notif.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                              {notif.message}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
+                      <Link
+                        href="/dashboard/notifications"
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="text-xs font-bold text-[#1b5e3a] dark:text-emerald-400 hover:underline"
+                      >
+                        View all alerts
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="text-right hidden md:block pl-2">
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                 {adminUser.lastName} {adminUser.firstName}
               </p>
-              <p className="text-[10px] font-bold text-[#1b5e3a] uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-[#1b5e3a] dark:text-emerald-400 uppercase tracking-widest">
                 {adminUser.role.replace("_", " ")}
               </p>
             </div>

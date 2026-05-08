@@ -9,7 +9,7 @@ export const fetchFinancialData = createAsyncThunk(
       const [accountRes, loansRes, txnRes] = await Promise.all([
         apiClient.get("/account/my-account"),
         apiClient.get("/loans/my-loans"),
-        apiClient.get("/account/transactions"),
+        apiClient.get("/account/transactions?limit=50"), // Added limit
       ]);
 
       return {

@@ -18,9 +18,7 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // 🚀 Clean apiClient call
       await apiClient.post("/auth/forgot-password", { email });
-
       setIsSuccess(true);
       toast.success("Reset link sent!");
     } catch (error: any) {
@@ -33,7 +31,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fe] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
@@ -47,10 +45,10 @@ export default function ForgotPasswordPage() {
             className="object-contain w-auto h-auto"
           />
           <div className="flex flex-col">
-            <span className="font-extrabold text-[10px] tracking-tight text-slate-500 uppercase leading-tight">
+            <span className="font-extrabold text-[10px] tracking-tight text-slate-500 dark:text-slate-400 uppercase leading-tight">
               System Demo
             </span>
-            <span className="font-bold text-lg tracking-tight text-[#2B2F42] leading-tight">
+            <span className="font-bold text-lg tracking-tight text-[#2B2F42] dark:text-slate-200 leading-tight">
               Co-operative
             </span>
           </div>
@@ -58,10 +56,10 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:p-10 shadow-sm border border-slate-200 rounded-sm mx-4 sm:mx-0">
+        <div className="bg-white dark:bg-[#1B1B25] py-8 px-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-800 rounded-sm mx-4 sm:mx-0 transition-colors">
           {isSuccess ? (
             <div className="text-center animate-fade-in-up">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 bg-emerald-50 text-[#1b5e3a] rounded-sm mb-4 border border-emerald-100">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 bg-emerald-50 dark:bg-emerald-900/20 text-[#1b5e3a] dark:text-emerald-400 rounded-sm mb-4 border border-emerald-100 dark:border-emerald-800/50">
                 <svg
                   className="h-6 w-6"
                   fill="none"
@@ -76,17 +74,19 @@ export default function ForgotPasswordPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">
                 Check your inbox
               </h3>
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                 If an account exists for{" "}
-                <span className="font-semibold text-slate-700">{email}</span>,
-                we have sent a secure password reset link.
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {email}
+                </span>
+                , we have sent a secure password reset link.
               </p>
               <Link
                 href="/login"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-sm shadow-sm text-sm font-bold text-[#1b5e3a] bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-sm shadow-sm text-sm font-bold text-[#1b5e3a] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
               >
                 Back to Login
               </Link>
@@ -94,10 +94,10 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <div className="mb-6 text-center">
-                <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">
                   Forgot your password?
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Enter your email to receive a secure reset link.
                 </p>
               </div>
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-xs font-bold text-slate-700 mb-1.5"
+                    className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5"
                   >
                     Email address
                   </label>
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full px-4 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] transition-colors"
+                    className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
                     placeholder="Enter your registered email"
                   />
                 </div>
@@ -132,12 +132,12 @@ export default function ForgotPasswordPage() {
                 </div>
               </form>
 
-              <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-                <p className="text-xs text-slate-600">
+              <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Remember your password?{" "}
                   <Link
                     href="/login"
-                    className="font-bold text-[#1b5e3a] hover:underline transition"
+                    className="font-bold text-[#1b5e3a] dark:text-emerald-400 hover:underline transition"
                   >
                     Return to secure login
                   </Link>

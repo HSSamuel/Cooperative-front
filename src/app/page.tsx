@@ -98,7 +98,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-white/10 text-emerald-300 text-xs font-bold tracking-widest uppercase mb-6 border border-white/5">
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            ASCON Staff Multi-Purpose Society
+            ASCON Staff Multi-Purpose Co-operative Society Ltd.
           </div>
           <h1 className="text-4xl sm:text-6xl font-bold text-white tracking-tight mb-6 leading-tight">
             Financial Independence, <br className="hidden sm:block" />

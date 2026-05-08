@@ -29,11 +29,9 @@ export default function ResetPasswordPage({
 
     setIsSubmitting(true);
     try {
-      // 🚀 Clean apiClient call
       await apiClient.put(`/auth/reset-password/${params.token}`, {
         password: passwordData.password,
       });
-
       toast.success("Password successfully reset! You can now log in.");
       setTimeout(() => router.push("/login"), 2000);
     } catch (error: any) {
@@ -44,7 +42,7 @@ export default function ResetPasswordPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fe] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
@@ -58,10 +56,10 @@ export default function ResetPasswordPage({
             className="object-contain w-auto h-auto"
           />
           <div className="flex flex-col">
-            <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 uppercase leading-tight">
+            <span className="font-black text-sm sm:text-base tracking-widest text-slate-500 dark:text-slate-400 uppercase leading-tight">
               ASCON
             </span>
-            <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] leading-tight">
+            <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] dark:text-emerald-400 leading-tight">
               Co-operative
             </span>
           </div>
@@ -69,19 +67,19 @@ export default function ResetPasswordPage({
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:p-10 shadow-sm border border-slate-200 rounded-sm mx-4 sm:mx-0">
+        <div className="bg-white dark:bg-[#1B1B25] py-8 px-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-800 rounded-sm mx-4 sm:mx-0 transition-colors">
           <div className="mb-6 text-center">
-            <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">
               Create New Password
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
               Enter your new security credentials below.
             </p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 New Password
               </label>
               <div className="relative">
@@ -95,13 +93,13 @@ export default function ResetPasswordPage({
                       password: e.target.value,
                     })
                   }
-                  className="block w-full pl-4 pr-10 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] transition-colors"
+                  className="block w-full pl-4 pr-10 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
                   placeholder="At least 6 characters"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none"
                 >
                   {showPassword ? (
                     <svg
@@ -143,7 +141,7 @@ export default function ResetPasswordPage({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 Confirm Password
               </label>
               <input
@@ -156,7 +154,7 @@ export default function ResetPasswordPage({
                     confirmPassword: e.target.value,
                   })
                 }
-                className="block w-full px-4 py-2.5 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] transition-colors"
+                className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
                 placeholder="Repeat new password"
               />
             </div>
@@ -171,10 +169,10 @@ export default function ResetPasswordPage({
               </button>
             </div>
 
-            <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+            <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
               <Link
                 href="/login"
-                className="text-xs font-bold text-[#1b5e3a] hover:underline transition-colors"
+                className="text-xs font-bold text-[#1b5e3a] dark:text-emerald-400 hover:underline transition-colors"
               >
                 Cancel and return to login
               </Link>

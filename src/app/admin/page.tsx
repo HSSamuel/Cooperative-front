@@ -24,7 +24,6 @@ export default function AdminOverviewPage() {
 
   const fetchData = async () => {
     try {
-      // 🚀 Clean apiClient call
       const [loansRes, statsRes, auditRes] = await Promise.all([
         apiClient.get("/loans/all"),
         apiClient.get("/account/global-stats"),
@@ -52,7 +51,6 @@ export default function AdminOverviewPage() {
       return;
     setProcessingId(loanId);
     try {
-      // 🚀 Clean apiClient call
       await apiClient.put(`/loans/${loanId}/review`, {
         status,
         adminComment: `Reviewed by Admin`,
@@ -70,7 +68,6 @@ export default function AdminOverviewPage() {
 
   const handleDownloadPayroll = async () => {
     try {
-      // 🚀 Clean apiClient call
       const res = await apiClient.get("/loans/payroll-report", {
         responseType: "blob",
       });
@@ -165,8 +162,8 @@ export default function AdminOverviewPage() {
   if (isLoading) {
     return (
       <div className="animate-pulse flex flex-col gap-6">
-        <div className="h-32 bg-slate-200 rounded-sm"></div>
-        <div className="h-64 bg-slate-200 rounded-sm"></div>
+        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
+        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
       </div>
     );
   }
@@ -174,7 +171,7 @@ export default function AdminOverviewPage() {
   return (
     <div className="animate-fade-in-up pb-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#2B2F42] rounded-sm p-6 shadow-sm text-white">
+        <div className="bg-[#2B2F42] rounded-sm p-6 shadow-sm text-white transition-colors">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             Total Pooled Savings
           </p>
@@ -185,22 +182,22 @@ export default function AdminOverviewPage() {
             {globalStats.activeMembersCount} Active Members
           </p>
         </div>
-        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+        <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
             Estimated Liquidity
           </p>
-          <h2 className="text-3xl font-bold text-slate-700 tabular-nums tracking-tight">
+          <h2 className="text-3xl font-bold text-slate-700 dark:text-slate-200 tabular-nums tracking-tight">
             ₦{formatNaira(estimatedLiquidity)}
           </h2>
           <p className="text-xs text-slate-400 mt-2">
             Approx. funds available for lending
           </p>
         </div>
-        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+        <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
             Active Capital (Field)
           </p>
-          <h2 className="text-3xl font-bold text-[#1b5e3a] tabular-nums tracking-tight">
+          <h2 className="text-3xl font-bold text-[#1b5e3a] dark:text-emerald-400 tabular-nums tracking-tight">
             ₦{formatNaira(activeLoansValue)}
           </h2>
           <p className="text-xs text-slate-400 mt-2">
@@ -210,12 +207,12 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200 flex justify-between items-center">
+        <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex justify-between items-center transition-colors">
           <div>
             <p className="text-xs font-bold text-[#F39C12] uppercase tracking-wider mb-1">
               Action Required
             </p>
-            <h2 className="text-3xl font-bold text-slate-700">
+            <h2 className="text-3xl font-bold text-slate-700 dark:text-slate-200">
               {pendingReviewsCount}
             </h2>
             <p className="text-xs text-slate-400">
@@ -223,13 +220,13 @@ export default function AdminOverviewPage() {
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-sm p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+        <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-center transition-colors">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               HR Export Hub
             </p>
           </div>
-          <p className="text-xs text-slate-500 mb-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
             Generate the monthly deduction report for the ASCON Payroll team.
           </p>
           <button
@@ -241,30 +238,30 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-100 pb-4">
+      <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 transition-colors">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("PENDING")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "PENDING" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "PENDING" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Pending
             </button>
             <button
               onClick={() => setActiveTab("ACTIVE")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ACTIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ACTIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Active
             </button>
             <button
               onClick={() => setActiveTab("ARCHIVE")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ARCHIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ARCHIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Archive
             </button>
             <button
               onClick={() => setActiveTab("AUDIT")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "AUDIT" ? "bg-[#6A5AE0] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "AUDIT" ? "bg-[#6A5AE0] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Audit Log
             </button>
@@ -275,7 +272,7 @@ export default function AdminOverviewPage() {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border border-slate-300 rounded-sm px-3 py-1.5 text-sm focus:outline-none focus:border-slate-500 w-full sm:w-64"
+              className="border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm px-3 py-1.5 text-sm focus:outline-none focus:border-slate-500 dark:focus:border-slate-400 w-full sm:w-64"
             />
           )}
         </div>
@@ -284,7 +281,7 @@ export default function AdminOverviewPage() {
           {activeTab === "AUDIT" ? (
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="border-b-2 border-slate-200 text-slate-700 font-bold">
+                <tr className="border-b-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                   <th className="py-3 px-4">TIMESTAMP</th>
                   <th className="py-3 px-4">ADMIN DETAILS</th>
                   <th className="py-3 px-4">ACTION TYPE</th>
@@ -296,7 +293,7 @@ export default function AdminOverviewPage() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-8 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                     >
                       No audit trails found.
                     </td>
@@ -305,23 +302,23 @@ export default function AdminOverviewPage() {
                   auditLogs.map((log) => (
                     <tr
                       key={log._id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
+                      className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
                     >
-                      <td className="py-3 px-4 text-slate-500">
+                      <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
                         {new Date(log.createdAt).toLocaleString()}
                       </td>
-                      <td className="py-3 px-4 font-semibold text-slate-700">
+                      <td className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">
                         {log.adminId?.firstName} {log.adminId?.lastName} <br />
-                        <span className="text-xs font-normal text-slate-400">
+                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
                           {log.adminId?.fileNumber}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="bg-slate-200 text-slate-700 px-2 py-1 text-[10px] rounded-sm uppercase">
+                        <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 text-[10px] rounded-sm uppercase">
                           {log.action}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-slate-600">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
                         {log.description}
                       </td>
                     </tr>
@@ -332,7 +329,7 @@ export default function AdminOverviewPage() {
           ) : (
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="border-b-2 border-slate-200 text-slate-700 font-bold">
+                <tr className="border-b-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                   <th className="py-3 px-4">APPLICANT</th>
                   <th className="py-3 px-4 text-right">REQUESTED</th>
                   <th className="py-3 px-4 text-center">STATUS</th>
@@ -344,7 +341,7 @@ export default function AdminOverviewPage() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-8 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                     >
                       No records found.
                     </td>
@@ -353,18 +350,18 @@ export default function AdminOverviewPage() {
                   displayLoans.map((loan) => (
                     <tr
                       key={loan._id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
+                      className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
                     >
                       <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-800">
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">
                           {loan.cooperatorId?.lastName}{" "}
                           {loan.cooperatorId?.firstName}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {loan.cooperatorId?.fileNumber}
                         </div>
                       </td>
-                      <td className="py-4 px-4 font-bold text-slate-700 text-right">
+                      <td className="py-4 px-4 font-bold text-slate-700 dark:text-slate-300 text-right">
                         ₦{formatNaira(loan.amountRequested)}
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -389,7 +386,7 @@ export default function AdminOverviewPage() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-400 dark:text-slate-500">
                             Reviewed
                           </span>
                         )}

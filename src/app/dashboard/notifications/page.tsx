@@ -15,10 +15,7 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
-      // 🚀 Clean apiClient call
       const res = await apiClient.get("/notifications");
-
-      // 🚀 THE FIX: Filter out Login and Logout notifications
       const formattedNotifs = res.data
         .filter(
           (n: any) =>
@@ -56,9 +53,7 @@ export default function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     try {
-      // 🚀 Clean apiClient call
       await apiClient.put("/notifications/read-all", {});
-
       setNotifications(notifications.map((n) => ({ ...n, unread: false })));
       toast.success("All notifications marked as read.");
     } catch (error) {
@@ -68,9 +63,7 @@ export default function NotificationsPage() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      // 🚀 Clean apiClient call
       await apiClient.put(`/notifications/${id}/read`, {});
-
       setNotifications(
         notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)),
       );
@@ -81,9 +74,7 @@ export default function NotificationsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      // 🚀 Clean apiClient call
       await apiClient.delete(`/notifications/${id}`);
-
       setNotifications(notifications.filter((n) => n.id !== id));
       toast.success("Alert permanently deleted.");
     } catch (error) {
@@ -98,7 +89,7 @@ export default function NotificationsPage() {
     switch (type) {
       case "success":
         return (
-          <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -116,7 +107,7 @@ export default function NotificationsPage() {
         );
       case "financial":
         return (
-          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -134,7 +125,7 @@ export default function NotificationsPage() {
         );
       case "system":
         return (
-          <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -152,7 +143,7 @@ export default function NotificationsPage() {
         );
       case "danger":
         return (
-          <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center flex-shrink-0">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -170,7 +161,7 @@ export default function NotificationsPage() {
         );
       default:
         return (
-          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center flex-shrink-0">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -220,25 +211,25 @@ export default function NotificationsPage() {
     <div className="animate-fade-in-up pb-10 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">
             Notification Center
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">
             Manage your personal alerts and system updates.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex p-1 bg-slate-200/50 rounded-xl border border-slate-200">
+          <div className="flex p-1 bg-slate-200/50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">
             <button
               onClick={() => setFilter("ALL")}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === "ALL" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === "ALL" ? "bg-white dark:bg-[#1B1B25] text-slate-800 dark:text-slate-200 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
             >
               All
             </button>
             <button
               onClick={() => setFilter("UNREAD")}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === "UNREAD" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === "UNREAD" ? "bg-white dark:bg-[#1B1B25] text-slate-800 dark:text-slate-200 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
             >
               Unread
             </button>
@@ -247,7 +238,7 @@ export default function NotificationsPage() {
           <button
             onClick={handleMarkAllRead}
             disabled={!notifications.some((n) => n.unread)}
-            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-[#1b5e3a] hover:border-[#1b5e3a]/30 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+            className="p-2.5 bg-white dark:bg-[#1B1B25] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:text-[#1b5e3a] dark:hover:text-emerald-400 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
             title="Mark all as read"
           >
             <svg
@@ -267,12 +258,12 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+      <div className="bg-white dark:bg-[#1B1B25] rounded-3xl shadow-xl shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
         {filteredNotifications.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 transition-colors">
               <svg
-                className="w-8 h-8 text-slate-300"
+                className="w-8 h-8 text-slate-300 dark:text-slate-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -285,20 +276,20 @@ export default function NotificationsPage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-slate-700">
+            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">
               You're all caught up!
             </h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               There are no {filter === "UNREAD" ? "unread " : ""}transaction
               notifications to display right now.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredNotifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`p-6 sm:p-8 flex flex-col sm:flex-row gap-4 sm:gap-6 transition-colors group relative ${notif.unread ? "bg-emerald-50/20" : "hover:bg-slate-50/50"}`}
+                className={`p-6 sm:p-8 flex flex-col sm:flex-row gap-4 sm:gap-6 transition-colors group relative ${notif.unread ? "bg-emerald-50/20 dark:bg-emerald-900/10" : "hover:bg-slate-50/50 dark:hover:bg-[#12121A]/50"}`}
               >
                 {notif.unread && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
@@ -307,40 +298,39 @@ export default function NotificationsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 mb-2">
                     <h3
-                      className={`text-base sm:text-lg ${notif.unread ? "font-bold text-slate-800" : "font-semibold text-slate-700"}`}
+                      className={`text-base sm:text-lg ${notif.unread ? "font-bold text-slate-800 dark:text-slate-200" : "font-semibold text-slate-700 dark:text-slate-300"}`}
                     >
                       {notif.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500 whitespace-nowrap">
                       <span>{notif.date}</span>
-                      <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                      <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full"></span>
                       <span>{notif.time}</span>
                     </div>
                   </div>
                   <p
-                    className={`text-sm leading-relaxed ${notif.unread ? "text-slate-600" : "text-slate-500"}`}
+                    className={`text-sm leading-relaxed ${notif.unread ? "text-slate-600 dark:text-slate-300" : "text-slate-500 dark:text-slate-400"}`}
                   >
                     {notif.message}
                   </p>
                 </div>
 
-                <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-slate-100 sm:border-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity gap-2">
+                <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-slate-100 dark:border-slate-800 sm:border-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity gap-2">
                   {notif.unread ? (
                     <button
                       onClick={() => handleMarkAsRead(notif.id)}
-                      className="text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                      className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                     >
                       Mark Read
                     </button>
                   ) : (
-                    <span className="text-xs font-medium text-slate-400 px-3 py-1.5">
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500 px-3 py-1.5">
                       Read
                     </span>
                   )}
-
                   <button
                     onClick={() => handleDelete(notif.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     title="Delete permanently"
                   >
                     <svg

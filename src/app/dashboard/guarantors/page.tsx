@@ -11,7 +11,6 @@ export default function GuarantorRequestsPage() {
 
   const fetchRequests = async () => {
     try {
-      // 🚀 Clean apiClient call
       const res = await apiClient.get("/loans/guarantor-requests");
       setRequests(res.data);
     } catch (error) {
@@ -31,9 +30,7 @@ export default function GuarantorRequestsPage() {
   ) => {
     setProcessingId(loanId);
     try {
-      // 🚀 Clean apiClient call
       await apiClient.put(`/loans/${loanId}/guarantee`, { action });
-
       toast.success(
         action === "ACCEPTED"
           ? "Guarantor request accepted."
@@ -59,32 +56,32 @@ export default function GuarantorRequestsPage() {
   if (isLoading) {
     return (
       <div className="animate-pulse flex flex-col gap-4">
-        <div className="h-32 bg-slate-200 rounded-sm"></div>
-        <div className="h-32 bg-slate-200 rounded-sm"></div>
+        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
+        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
       </div>
     );
   }
 
   return (
     <div className="animate-fade-in-up pb-10">
-      <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 sm:p-8">
-        <h3 className="text-xl font-bold text-slate-700 mb-2">
+      <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 transition-colors">
+        <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">
           Guarantor Requests
         </h3>
-        <p className="text-sm text-slate-500 mb-8 border-b border-slate-100 pb-4">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 border-b border-slate-100 dark:border-slate-800 pb-4">
           Review loan applications from colleagues who have listed you as a
           guarantor.
         </p>
 
         {requests.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm">
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
             You currently have no pending guarantor requests.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="border-b-2 border-slate-200 text-slate-700 font-bold">
+                <tr className="border-b-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                   <th className="py-3 px-4">APPLICANT</th>
                   <th className="py-3 px-4">FILE NUMBER</th>
                   <th className="py-3 px-4 text-right">AMOUNT REQUESTED</th>
@@ -95,15 +92,15 @@ export default function GuarantorRequestsPage() {
                 {requests.map((loan) => (
                   <tr
                     key={loan._id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
+                    className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
                   >
-                    <td className="py-4 px-4 font-semibold text-slate-800">
+                    <td className="py-4 px-4 font-semibold text-slate-800 dark:text-slate-200">
                       {loan.cooperatorId.firstName} {loan.cooperatorId.lastName}
                     </td>
-                    <td className="py-4 px-4 text-slate-600">
+                    <td className="py-4 px-4 text-slate-600 dark:text-slate-400">
                       {loan.cooperatorId.fileNumber}
                     </td>
-                    <td className="py-4 px-4 text-slate-800 text-right font-bold text-base">
+                    <td className="py-4 px-4 text-slate-800 dark:text-slate-200 text-right font-bold text-base">
                       ₦{formatNaira(loan.amountRequested)}
                     </td>
                     <td className="py-4 px-4">

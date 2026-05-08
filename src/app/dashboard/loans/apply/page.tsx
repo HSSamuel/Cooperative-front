@@ -11,28 +11,36 @@ export default function ApplyForLoanPage() {
 
   const [loanType, setLoanType] = useState("REGULAR");
   const [amountRequested, setAmountRequested] = useState("");
+  const [tenure, setTenure] = useState<number>(10);
   const [guarantor1, setGuarantor1] = useState("");
   const [guarantor2, setGuarantor2] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [creditLimit, setCreditLimit] = useState(0);
+  const [interestRate, setInterestRate] = useState(10); // 🚀 NEW DEFAULT: 10%
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAccountData = async () => {
+    const fetchData = async () => {
       try {
-        // 🚀 Clean apiClient call
-        const { data } = await apiClient.get("/account/my-account");
-        setCreditLimit(data.availableCreditLimit);
+        const [accountRes, settingsRes] = await Promise.all([
+          apiClient.get("/account/my-account"),
+          apiClient
+            .get("/system/settings")
+            .catch(() => ({ data: { settings: { interestRate: 10 } } })), // 🚀 NEW DEFAULT FALLBACK
+        ]);
+
+        setCreditLimit(accountRes.data.availableCreditLimit);
+        setInterestRate(settingsRes.data.settings?.interestRate ?? 10); // 🚀 NEW DEFAULT
       } catch (error) {
-        console.error("Failed to fetch account for limit", error);
-        toast.error("Could not verify your credit limit.");
+        console.error("Failed to fetch data", error);
+        toast.error("Could not verify your application limits.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchAccountData();
+    fetchData();
   }, []);
 
   const formatNaira = (amountInKobo: number) => {
@@ -45,37 +53,37 @@ export default function ApplyForLoanPage() {
   const requestedValueKobo = Math.round(
     (parseFloat(amountRequested) || 0) * 100,
   );
-  const monthlyDeduction = requestedValueKobo * 0.1;
+  const totalInterestPercentage = interestRate * (tenure / 10);
+  const interestAmountKobo = Math.round(
+    requestedValueKobo * (totalInterestPercentage / 100),
+  );
+  const totalDueKobo = requestedValueKobo + interestAmountKobo;
+  const monthlyDeduction = totalDueKobo / tenure;
+
   const isOverLimit = requestedValueKobo > creditLimit;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (requestedValueKobo <= 0) {
+    if (requestedValueKobo <= 0)
       return toast.error("Please enter a valid loan amount.");
-    }
-
-    if (isOverLimit) {
+    if (isOverLimit)
       return toast.error(
         "Requested amount exceeds your available credit limit.",
       );
-    }
-
-    if (!guarantor1 || !guarantor2) {
+    if (!guarantor1 || !guarantor2)
       return toast.error("Two guarantors are strictly required.");
-    }
-    if (guarantor1 === guarantor2) {
+    if (guarantor1 === guarantor2)
       return toast.error("You must provide two different guarantors.");
-    }
 
     setIsSubmitting(true);
     try {
-      // 🚀 Clean apiClient call
       await apiClient.post("/loans/request", {
         loanType,
         amountInKobo: requestedValueKobo,
         guarantor1FileNumber: guarantor1,
         guarantor2FileNumber: guarantor2,
+        tenure,
       });
 
       toast.success("Loan application submitted successfully!");
@@ -92,8 +100,8 @@ export default function ApplyForLoanPage() {
   if (isLoading) {
     return (
       <div className="animate-pulse flex gap-6 h-[600px] w-full">
-        <div className="w-2/3 bg-slate-200 rounded-sm"></div>
-        <div className="w-1/3 bg-slate-200 rounded-sm"></div>
+        <div className="w-2/3 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
+        <div className="w-1/3 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
       </div>
     );
   }
@@ -103,7 +111,7 @@ export default function ApplyForLoanPage() {
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/dashboard/loans"
-          className="text-slate-400 hover:text-[#1b5e3a] transition-colors p-2 bg-white rounded-full shadow-sm border border-slate-100"
+          className="text-slate-400 dark:text-slate-500 hover:text-[#1b5e3a] dark:hover:text-emerald-400 transition-colors p-2 bg-white dark:bg-[#1B1B25] rounded-full shadow-sm border border-slate-100 dark:border-slate-800"
         >
           <svg
             className="w-5 h-5"
@@ -120,20 +128,20 @@ export default function ApplyForLoanPage() {
           </svg>
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
             Apply for a Facility
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Fill out the details below to request a new cooperative loan.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-8 bg-white rounded-sm border border-slate-200 shadow-sm p-8">
+        <div className="lg:col-span-8 bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-8 transition-colors">
           <form onSubmit={handleSubmit} className="space-y-8">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-3">
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                 1. Select Facility Type
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -164,8 +172,8 @@ export default function ApplyForLoanPage() {
                     onClick={() => setLoanType(type.id)}
                     className={`cursor-pointer border-2 rounded-sm p-4 transition-all ${
                       loanType === type.id
-                        ? "border-[#1b5e3a] bg-emerald-50/50"
-                        : "border-slate-100 hover:border-slate-300"
+                        ? "border-[#1b5e3a] dark:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20"
+                        : "border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
                     }`}
                   >
                     <input
@@ -178,19 +186,19 @@ export default function ApplyForLoanPage() {
                     />
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center ${loanType === type.id ? "border-[#1b5e3a]" : "border-slate-300"}`}
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center ${loanType === type.id ? "border-[#1b5e3a] dark:border-emerald-500" : "border-slate-300 dark:border-slate-600"}`}
                       >
                         {loanType === type.id && (
-                          <div className="w-2.5 h-2.5 bg-[#1b5e3a] rounded-full"></div>
+                          <div className="w-2.5 h-2.5 bg-[#1b5e3a] dark:bg-emerald-500 rounded-full"></div>
                         )}
                       </div>
                       <div>
                         <h4
-                          className={`font-bold ${loanType === type.id ? "text-[#1b5e3a]" : "text-slate-700"}`}
+                          className={`font-bold ${loanType === type.id ? "text-[#1b5e3a] dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}
                         >
                           {type.title}
                         </h4>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                           {type.desc}
                         </p>
                       </div>
@@ -200,20 +208,19 @@ export default function ApplyForLoanPage() {
               </div>
             </div>
 
-            <hr className="border-slate-100" />
+            <hr className="border-slate-100 dark:border-slate-800" />
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                 2. Nominate Guarantors
               </label>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                 Enter the ASCON File Numbers of two cooperative members to
                 guarantee this facility.
               </p>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1.5">
                     First Guarantor
                   </label>
                   <input
@@ -223,12 +230,12 @@ export default function ApplyForLoanPage() {
                     onChange={(e) =>
                       setGuarantor1(e.target.value.toUpperCase())
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] uppercase"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 uppercase transition-colors"
                     placeholder="E.g. ASCON-042"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1.5">
                     Second Guarantor
                   </label>
                   <input
@@ -238,27 +245,26 @@ export default function ApplyForLoanPage() {
                     onChange={(e) =>
                       setGuarantor2(e.target.value.toUpperCase())
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] uppercase"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 uppercase transition-colors"
                     placeholder="E.g. ASCON-089"
                   />
                 </div>
               </div>
             </div>
 
-            <hr className="border-slate-100" />
+            <hr className="border-slate-100 dark:border-slate-800" />
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                 3. Enter Requested Amount
               </label>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                 Your maximum available credit limit is{" "}
-                <span className="font-bold text-[#1b5e3a]">
+                <span className="font-bold text-[#1b5e3a] dark:text-emerald-400">
                   ₦{formatNaira(creditLimit)}
                 </span>{" "}
                 (200% of your total savings).
               </p>
-
               <div className="relative max-w-md">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 font-bold text-xl">
                   ₦
@@ -270,16 +276,16 @@ export default function ApplyForLoanPage() {
                   value={amountRequested}
                   onChange={(e) => setAmountRequested(e.target.value)}
                   onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                  className={`w-full pl-10 pr-4 py-4 text-xl font-bold border-2 rounded-sm focus:outline-none transition-colors ${
+                  className={`w-full pl-10 pr-4 py-4 text-xl font-bold border-2 rounded-sm bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none transition-colors ${
                     isOverLimit
-                      ? "border-red-300 focus:border-red-500 bg-red-50"
-                      : "border-slate-200 focus:border-[#1b5e3a]"
+                      ? "border-red-300 dark:border-red-500/50 focus:border-red-500 bg-red-50 dark:bg-red-900/10"
+                      : "border-slate-200 dark:border-slate-700 focus:border-[#1b5e3a] dark:focus:border-emerald-500"
                   }`}
                   placeholder="0.00"
                 />
               </div>
               {isOverLimit && (
-                <p className="text-xs font-bold text-red-500 mt-2 flex items-center gap-1">
+                <p className="text-xs font-bold text-red-500 dark:text-red-400 mt-2 flex items-center gap-1">
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -312,7 +318,7 @@ export default function ApplyForLoanPage() {
                 className="bg-[#1b5e3a] hover:bg-[#124228] text-white px-8 py-3 rounded-sm font-bold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isSubmitting ? (
-                  <>Processing Application...</>
+                  "Processing Application..."
                 ) : (
                   <>
                     Submit Application
@@ -337,7 +343,7 @@ export default function ApplyForLoanPage() {
         </div>
 
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className="bg-[#f8f9fe] border border-slate-200 rounded-sm overflow-hidden shadow-sm sticky top-6">
+          <div className="bg-[#f8f9fe] dark:bg-[#12121A]/50 border border-slate-200 dark:border-slate-800 rounded-sm overflow-hidden shadow-sm sticky top-6 transition-colors">
             <div className="bg-[#1b5e3a] px-6 py-4">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <svg
@@ -359,10 +365,10 @@ export default function ApplyForLoanPage() {
 
             <div className="p-6 space-y-6">
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                   Requested Amount
                 </p>
-                <h4 className="text-2xl font-bold text-slate-800">
+                <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                   ₦
                   {requestedValueKobo > 0
                     ? formatNaira(requestedValueKobo)
@@ -371,39 +377,49 @@ export default function ApplyForLoanPage() {
               </div>
 
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                   Facility Type
                 </p>
-                <h4 className="text-sm font-bold text-slate-800 capitalize">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 capitalize">
                   {loanType.toLowerCase()} Loan
                 </h4>
               </div>
 
-              <div className="bg-white p-4 rounded-sm border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              <div className="bg-white dark:bg-[#1B1B25] p-4 rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                   Estimated Monthly Deduction
                 </p>
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xl font-bold text-red-500">
+                  <h4 className="text-xl font-bold text-red-500 dark:text-red-400">
                     -₦
                     {requestedValueKobo > 0
                       ? formatNaira(monthlyDeduction)
                       : "0.00"}
                   </h4>
-                  <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-sm">
-                    10 Months
-                  </span>
+                  <select
+                    value={tenure}
+                    onChange={(e) => setTenure(Number(e.target.value))}
+                    className="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1b5e3a]"
+                  >
+                    <option value={10}>10 Months</option>
+                    <option value={20}>20 Months</option>
+                    <option value={30}>30 Months</option>
+                    <option value={36}>36 Months</option>
+                  </select>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2 leading-tight">
-                  Based on a standard 10-month repayment tenure. This amount
-                  will be automatically deducted from your payroll during
-                  reconciliation.
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 leading-tight">
+                  Based on a {tenure}-month repayment tenure at{" "}
+                  <strong className="text-slate-700 dark:text-slate-300">
+                    {totalInterestPercentage.toFixed(1)}% total interest
+                  </strong>
+                  . This amount will be automatically deducted from your payroll
+                  during reconciliation.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-sm p-5 text-amber-800 text-xs">
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-sm p-5 text-amber-800 dark:text-amber-400 text-xs transition-colors">
             <h4 className="font-bold flex items-center gap-1.5 mb-2">
               <svg
                 className="w-4 h-4"
