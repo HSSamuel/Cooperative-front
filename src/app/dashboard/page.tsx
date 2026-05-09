@@ -141,7 +141,6 @@ export default function DashboardOverview() {
           </div>
         )}
 
-        {/* 🚀 UX UPGRADE: Mobile horizontal swipeable row for metric cards */}
         <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pb-4 sm:pb-0 snap-x snap-mandatory custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="min-w-[260px] sm:min-w-0 snap-center bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-[#1b5e3a] relative overflow-hidden group transition-colors">
             <div className="absolute -right-6 -top-6 text-emerald-50 dark:text-emerald-900/20 opacity-50 group-hover:scale-110 transition-transform duration-500">
@@ -249,7 +248,6 @@ export default function DashboardOverview() {
               </div>
             </div>
 
-            {/* 🚀 FIX: Forced single-line horizontal scrolling for the Pie Chart legend on mobile */}
             <div className="h-[320px] w-full min-w-0 mt-2 [&_.recharts-default-legend]:!flex [&_.recharts-default-legend]:!flex-nowrap [&_.recharts-default-legend]:!overflow-x-auto [&_.recharts-default-legend]:!justify-start sm:[&_.recharts-default-legend]:!justify-center [&_.recharts-legend-item]:!whitespace-nowrap [&_.recharts-legend-item]:!mr-4 [&_.recharts-default-legend]:pb-2 custom-scrollbar hide-scrollbar-on-mobile">
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
@@ -373,8 +371,9 @@ export default function DashboardOverview() {
                           {txn.description}
                         </p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          {new Date(txn.createdAt).toLocaleDateString()} •{" "}
-                          {txn.effectiveMonth || "Auto"}
+                          {/* 🚀 FIX: Apply explicit "en-GB" locale to prevent SSR/CSR Hydration Mismatch */}
+                          {new Date(txn.createdAt).toLocaleDateString("en-GB")}{" "}
+                          • {txn.effectiveMonth || "Auto"}
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">

@@ -25,7 +25,6 @@ export default function DashboardClientLayout({
   const dispatch = useDispatch<AppDispatch>();
   const initialized = useRef(false);
 
-  // Hydrate Redux instantly before the first render to eliminate the loading flash
   if (!initialized.current) {
     dispatch({
       type: fetchFinancialData.fulfilled.type,
@@ -106,7 +105,6 @@ export default function DashboardClientLayout({
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       fetchNotifications();
-      // Silently refetch in background to ensure absolute synchronicity
       dispatch(fetchFinancialData());
     } else {
       router.push("/login");
@@ -141,21 +139,19 @@ export default function DashboardClientLayout({
     }
   };
 
- const handleLogout = async () => {
-   try {
-     await apiClient.post("/auth/logout");
-   } catch (error) {
-     console.error("Logout error", error);
-   }
-   localStorage.removeItem("coop_user");
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+    localStorage.removeItem("coop_user");
+    document.cookie =
+      "coop_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
 
-   // 🚀 FIX: Destroy the frontend cookie
-   document.cookie =
-     "coop_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
-
-   dispatch(clearFinanceData());
-   router.push("/login");
- };
+    dispatch(clearFinanceData());
+    router.push("/login");
+  };
 
   const handleToggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
@@ -218,6 +214,7 @@ export default function DashboardClientLayout({
               alt="ASCON Logo"
               width={44}
               height={44}
+              priority
               className="object-contain w-auto h-auto flex-shrink-0"
             />
             <div className="flex flex-col lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
@@ -372,7 +369,8 @@ export default function DashboardClientLayout({
                     className="fixed inset-0 z-40"
                     onClick={() => setIsNotificationsOpen(false)}
                   />
-                  <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
+                  {/* 🚀 FIX: Made the dropdown fixed and fully centered on mobile, reverting to normal absolute alignment on desktop */}
+                  <div className="fixed sm:absolute top-[84px] sm:top-auto left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0 mt-0 sm:mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-sm bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 flex justify-between items-center">
                       <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
                         Notifications

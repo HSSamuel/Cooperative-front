@@ -6,8 +6,14 @@ import Link from "next/link";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 
+// 🚀 FIX: Import Redux to trigger an instant background refresh
+import { useDispatch } from "react-redux";
+import { fetchFinancialData } from "@/store/financeSlice";
+import type { AppDispatch } from "@/store";
+
 export default function ApplyForLoanPage() {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [loanType, setLoanType] = useState("REGULAR");
   const [amountRequested, setAmountRequested] = useState("");
@@ -17,7 +23,7 @@ export default function ApplyForLoanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [creditLimit, setCreditLimit] = useState(0);
-  const [interestRate, setInterestRate] = useState(10); // 🚀 NEW DEFAULT: 10%
+  const [interestRate, setInterestRate] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,11 +33,11 @@ export default function ApplyForLoanPage() {
           apiClient.get("/account/my-account"),
           apiClient
             .get("/system/settings")
-            .catch(() => ({ data: { settings: { interestRate: 10 } } })), // 🚀 NEW DEFAULT FALLBACK
+            .catch(() => ({ data: { settings: { interestRate: 10 } } })),
         ]);
 
         setCreditLimit(accountRes.data.availableCreditLimit);
-        setInterestRate(settingsRes.data.settings?.interestRate ?? 10); // 🚀 NEW DEFAULT
+        setInterestRate(settingsRes.data.settings?.interestRate ?? 10);
       } catch (error) {
         console.error("Failed to fetch data", error);
         toast.error("Could not verify your application limits.");
@@ -87,6 +93,10 @@ export default function ApplyForLoanPage() {
       });
 
       toast.success("Loan application submitted successfully!");
+
+      // 🚀 FIX: Await the global state update before routing
+      await dispatch(fetchFinancialData());
+
       router.push("/dashboard/loans");
     } catch (error: any) {
       toast.error(

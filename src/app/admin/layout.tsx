@@ -135,7 +135,6 @@ export default function AdminLayout({
     router.push("/dashboard");
   };
 
-  // 🚀 FIX: Added the proper Logout function for the Admin panel to destroy the Netlify cookie
   const handleLogout = async () => {
     try {
       await apiClient.post("/auth/logout");
@@ -185,7 +184,7 @@ export default function AdminLayout({
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-[#23232F] text-white flex flex-col border-r border-[#1B1B25] group overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 w-72 lg:w-20 lg:hover:w-64 lg:sticky lg:top-0 lg:h-screen ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        <div className="h-20 flex items-center justify-center px-4 border-b border-[#313140] flex-shrink-0 bg-white">
+        <div className="h-16 flex items-center justify-center px-4 border-b border-[#313140] flex-shrink-0 bg-white">
           <Link
             href="/"
             className="flex items-center gap-3 hover:opacity-80 transition w-full overflow-hidden"
@@ -262,7 +261,6 @@ export default function AdminLayout({
             </span>
           </button>
 
-          {/* 🚀 FIX: Added the Logout Button specifically for Admins */}
           <button
             onClick={handleLogout}
             className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-red-400 hover:bg-white/5 hover:text-red-300 font-medium"
@@ -353,7 +351,8 @@ export default function AdminLayout({
                     className="fixed inset-0 z-40"
                     onClick={() => setIsNotificationsOpen(false)}
                   />
-                  <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
+                  {/* 🚀 FIX: Made the dropdown fixed and fully centered on mobile, reverting to normal absolute alignment on desktop */}
+                  <div className="fixed sm:absolute top-[84px] sm:top-auto left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0 mt-0 sm:mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-sm bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 flex justify-between items-center">
                       <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
                         Notifications

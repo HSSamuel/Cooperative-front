@@ -247,7 +247,6 @@ export default function LoansPage() {
               const interestKobo = totalDueKobo - principalKobo;
               const interestRate = loan.interestRate || 10;
 
-              // 🚀 Dynamic Tenure Calculation
               const loanTenure = loan.tenure || 10;
               const monthlyKobo = totalDueKobo / loanTenure;
 
@@ -260,7 +259,7 @@ export default function LoansPage() {
 
               const startDate = new Date(loan.createdAt);
               const endDate = new Date(loan.createdAt);
-              endDate.setMonth(endDate.getMonth() + loanTenure); // 🚀 Add dynamic months
+              endDate.setMonth(endDate.getMonth() + loanTenure);
               const dateOptions: Intl.DateTimeFormatOptions = {
                 day: "numeric",
                 month: "short",
@@ -672,9 +671,9 @@ export default function LoansPage() {
                           {balance > 0 ? `₦${formatNaira(balance)}` : "₦0.00"}
                         </td>
                         <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
-                          {new Date(loan.createdAt).toLocaleDateString()}
+                          {new Date(loan.createdAt).toLocaleDateString("en-GB")}
                           <br />
-                          {new Date(loan.createdAt).toLocaleTimeString()}
+                          {new Date(loan.createdAt).toLocaleTimeString("en-GB")}
                         </td>
                       </tr>
                     );
@@ -729,15 +728,17 @@ export default function LoansPage() {
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-medium">
                     ₦
                   </span>
+                  {/* 🚀 FIX: Added min="0.01" and step="0.01" for fractional Kobo payments */}
                   <input
                     type="number"
                     required
-                    min="100"
+                    min="0.01"
+                    step="0.01"
                     value={repayAmount}
                     onChange={(e) => setRepayAmount(e.target.value)}
                     onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     className="w-full pl-8 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500"
-                    placeholder="e.g. 50000"
+                    placeholder="e.g. 50000.50"
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">
