@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-// 🚀 FIX: Import useSearchParams
 import { useRouter, useSearchParams } from "next/navigation";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
+import { syncAuthCookie } from "../actions/auth";
 
 // 🚀 FIX: Extract the form logic into a sub-component so it can be wrapped in Suspense
 function LoginForm() {
@@ -18,41 +18,47 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const response = await apiClient.post("/auth/login", {
-        fileNumber,
-        password,
-      });
+ const handleLogin = async (e: React.FormEvent) => {
+   e.preventDefault();
+   setIsLoading(true);
+   try {
+     const response = await apiClient.post("/auth/login", {
+       fileNumber,
+       password,
+     });
 
-      // 1. Save ONLY the user profile data to local storage.
-      // The browser has already automatically saved the HttpOnly token cookie!
-      localStorage.setItem("coop_user", JSON.stringify(response.data.user));
+     const token = response.data.token;
+     if (!token) {
+       toast.error("Backend missing token.");
+       setIsLoading(false);
+       return;
+     }
 
-      toast.success("Welcome back!");
+     // 🚀 Securely sync the token to Next.js SSR via Server Action
+     await syncAuthCookie(token);
 
-      const redirectUrl = searchParams.get("redirect");
+     localStorage.setItem("coop_user", JSON.stringify(response.data.user));
+     toast.success("Welcome back!");
 
-      // 2. Redirect using window.location.href to force a hard navigation,
-      // ensuring the browser attaches the new cookie to subsequent requests.
-      if (redirectUrl) {
-        window.location.href = decodeURIComponent(redirectUrl);
-      } else if (
-        response.data.user.role === "ADMIN" ||
-        response.data.user.role === "SUPER_ADMIN"
-      ) {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/dashboard";
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Invalid credentials.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+     const redirectUrl = searchParams.get("redirect");
+
+     // 🚀 Use window.location.href to force Next.js to read the new cookie on route load
+     if (redirectUrl) {
+       window.location.href = decodeURIComponent(redirectUrl);
+     } else if (
+       response.data.user.role === "ADMIN" ||
+       response.data.user.role === "SUPER_ADMIN"
+     ) {
+       window.location.href = "/admin";
+     } else {
+       window.location.href = "/dashboard";
+     }
+   } catch (err: any) {
+     toast.error(err.response?.data?.message || "Invalid credentials.");
+   } finally {
+     setIsLoading(false);
+   }
+ };
 
   return (
     <form className="space-y-5" onSubmit={handleLogin}>
