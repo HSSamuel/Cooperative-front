@@ -39,16 +39,10 @@ export default function AdminOverviewPage() {
     }
   };
 
-  const handleReview = async (
+  const executeReview = async (
     loanId: string,
     status: "APPROVED" | "REJECTED",
   ) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to ${status.toLowerCase()} this loan?`,
-      )
-    )
-      return;
     setProcessingId(loanId);
     try {
       await apiClient.put(`/loans/${loanId}/review`, {
@@ -64,6 +58,89 @@ export default function AdminOverviewPage() {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const handleReview = (loanId: string, status: "APPROVED" | "REJECTED") => {
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? "animate-enter" : "animate-leave"
+          } max-w-sm w-full bg-white dark:bg-[#1B1B25] shadow-2xl rounded-2xl pointer-events-auto flex flex-col ring-1 ring-black/5 dark:ring-white/10 border border-slate-100 dark:border-slate-800 p-5`}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                status === "APPROVED"
+                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                  : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+              }`}
+            >
+              {status === "APPROVED" ? (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              )}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Confirm {status === "APPROVED" ? "Approval" : "Rejection"}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Are you sure you want to {status.toLowerCase()} this loan? This
+                action is permanent.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex gap-3 justify-end">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                executeReview(loanId, status);
+              }}
+              className={`px-4 py-2 text-xs font-bold text-white rounded-lg transition-colors shadow-sm ${
+                status === "APPROVED"
+                  ? "bg-[#20C997] hover:bg-[#1ab586]"
+                  : "bg-red-500 hover:bg-red-600"
+              }`}
+            >
+              Yes, {status === "APPROVED" ? "Approve" : "Reject"}
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, id: `confirm-review-${loanId}` }, // Infinity prevents the toast from auto-closing
+    );
   };
 
   const handleDownloadPayroll = async () => {
@@ -282,7 +359,7 @@ export default function AdminOverviewPage() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">
-                  <th className="py-3 px-4">TIMESTAMP</th>
+                  <th className="py-3 px-4">TIME/DATE</th>
                   <th className="py-3 px-4">ADMIN DETAILS</th>
                   <th className="py-3 px-4">ACTION TYPE</th>
                   <th className="py-3 px-4">DESCRIPTION</th>

@@ -195,6 +195,7 @@ export default function AdminLayout({
               alt="ASCON Logo"
               width={44}
               height={44}
+              priority
               className="object-contain w-auto h-auto flex-shrink-0"
             />
             <div className="flex flex-col lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
@@ -208,7 +209,7 @@ export default function AdminLayout({
           </Link>
         </div>
 
-        <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 pb-6 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (

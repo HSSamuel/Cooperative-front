@@ -306,11 +306,16 @@ export default function HRReportsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
+                            {/* 🚀 FIX: Use guarantor1 and guarantor2 instead of the undefined guarantors array */}
                             <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                              {loan.guarantors[0]?.fileNumber}
+                              {loan.guarantor1
+                                ? `G1 Status: ${loan.guarantor1.status}`
+                                : "No Guarantor 1"}
                             </div>
-                            <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                              {loan.guarantors[1]?.fileNumber}
+                            <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">
+                              {loan.guarantor2
+                                ? `G2 Status: ${loan.guarantor2.status}`
+                                : "No Guarantor 2"}
                             </div>
                           </td>
                         </tr>

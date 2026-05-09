@@ -231,7 +231,7 @@ export default function DashboardClientLayout({
           </Link>
         </div>
 
-        <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 pb-6 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (

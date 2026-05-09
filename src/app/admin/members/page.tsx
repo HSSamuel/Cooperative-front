@@ -8,7 +8,7 @@ type TabType = "IDENTITY" | "FINANCIALS" | "LOANS" | "LEDGER" | "COMMS";
 
 export default function MemberDirectoryPage() {
   const [members, setMembers] = useState<any[]>([]);
-  const [allLoans, setAllLoans] = useState<any[]>([]); // To calculate Risk & Portfolio
+  const [allLoans, setAllLoans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -50,7 +50,7 @@ export default function MemberDirectoryPage() {
     try {
       const [membersRes, loansRes] = await Promise.all([
         apiClient.get("/auth/all-members"),
-        apiClient.get("/loans/all").catch(() => ({ data: [] })), // Fetch all loans for risk calc
+        apiClient.get("/loans/all").catch(() => ({ data: [] })),
       ]);
       setMembers(membersRes.data);
       setAllLoans(loansRes.data);
@@ -165,7 +165,6 @@ export default function MemberDirectoryPage() {
       return toast.error("Please fill out the message.");
     setIsSendingNotice(true);
     try {
-      // 🚀 THE FIX: Replace the mock with the real backend endpoint
       await apiClient.post("/notifications/admin-send", {
         targetUserId: selectedMember._id,
         title: noticeTitle,
@@ -183,9 +182,8 @@ export default function MemberDirectoryPage() {
     }
   };
 
-  const handlePasswordResetTrigger = async () => {
-    if (!window.confirm("Send a password reset link to this user's email?"))
-      return;
+  // 1. The actual API execution logic
+  const executePasswordReset = async () => {
     try {
       await apiClient.post("/auth/forgot-password", {
         email: selectedMember.email,
@@ -194,6 +192,64 @@ export default function MemberDirectoryPage() {
     } catch (error) {
       toast.error("Failed to send reset link.");
     }
+  };
+
+  // 2. The custom toast confirmation UI
+  const handlePasswordResetTrigger = () => {
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? "animate-enter" : "animate-leave"
+          } max-w-sm w-full bg-white dark:bg-[#1B1B25] shadow-2xl rounded-2xl pointer-events-auto flex flex-col ring-1 ring-black/5 dark:ring-white/10 border border-slate-100 dark:border-slate-800 p-5`}
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Send Reset Link
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Are you sure you want to email a secure password reset link to{" "}
+                <span className="font-semibold">{selectedMember.email}</span>?
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex gap-3 justify-end">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                executePasswordReset();
+              }}
+              className="px-4 py-2 text-xs font-bold text-white rounded-lg transition-colors shadow-sm bg-blue-500 hover:bg-blue-600"
+            >
+              Yes, Send Link
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, id: `confirm-reset-${selectedMember?._id}` },
+    );
   };
 
   const closeModal = () => {
@@ -323,7 +379,6 @@ export default function MemberDirectoryPage() {
                         )}
                       </div>
                       <div>
-                        {/* 🚀 FIX: Appended member.otherName to the table row */}
                         <div className="font-semibold text-slate-800 dark:text-slate-200">
                           {member.lastName} {member.firstName}{" "}
                           {member.otherName || ""}
@@ -380,7 +435,6 @@ export default function MemberDirectoryPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    {/* 🚀 FIX: Injected the Other Name into the Modal Header */}
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 leading-none">
                       {selectedMember.firstName}{" "}
                       {selectedMember.otherName
@@ -463,7 +517,6 @@ export default function MemberDirectoryPage() {
                             {selectedMember.firstName}
                           </p>
                         </div>
-                        {/* 🚀 FIX: Added Other Name block to the Bio-Data Grid */}
                         <div>
                           <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
                             Other Name

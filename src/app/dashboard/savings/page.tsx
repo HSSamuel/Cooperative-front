@@ -212,7 +212,7 @@ export default function SavingsPage() {
                     Dividends
                   </th>
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
-                    Date Modified
+                    Date
                   </th>
                 </tr>
               </thead>

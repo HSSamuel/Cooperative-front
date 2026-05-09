@@ -30,7 +30,6 @@ export default function DashboardOverview() {
     }
   }, []);
 
-  // 🚀 FIX: Used nullish coalescing and Date.now() fallback to satisfy TypeScript
   useEffect(() => {
     if (account && account.cooperatorId) {
       const joinDate = new Date(
@@ -104,7 +103,6 @@ export default function DashboardOverview() {
   return (
     <div className="animate-fade-in-up pb-10">
       <div className="flex flex-col gap-6 w-full">
-        {/* 🚀 PROBATION BANNER: Only displays if user is under 6 months */}
         {isUnderProbation && probationEndDate && (
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-sm p-4 flex items-start sm:items-center gap-4 transition-colors shadow-sm">
             <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 p-2.5 rounded-full flex-shrink-0">
@@ -143,9 +141,9 @@ export default function DashboardOverview() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1 */}
-          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-[#1b5e3a] relative overflow-hidden group transition-colors">
+        {/* 🚀 UX UPGRADE: Mobile horizontal swipeable row for metric cards */}
+        <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pb-4 sm:pb-0 snap-x snap-mandatory custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="min-w-[260px] sm:min-w-0 snap-center bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-[#1b5e3a] relative overflow-hidden group transition-colors">
             <div className="absolute -right-6 -top-6 text-emerald-50 dark:text-emerald-900/20 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
                 className="w-24 h-24"
@@ -168,8 +166,7 @@ export default function DashboardOverview() {
             </div>
           </div>
 
-          {/* Card 2 */}
-          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-blue-500 relative overflow-hidden group transition-colors">
+          <div className="min-w-[260px] sm:min-w-0 snap-center bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-blue-500 relative overflow-hidden group transition-colors">
             <div className="absolute -right-6 -top-6 text-blue-50 dark:text-blue-900/20 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
                 className="w-24 h-24"
@@ -192,8 +189,7 @@ export default function DashboardOverview() {
             </div>
           </div>
 
-          {/* Card 3 */}
-          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-red-500 relative overflow-hidden group transition-colors">
+          <div className="min-w-[260px] sm:min-w-0 snap-center bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-red-500 relative overflow-hidden group transition-colors">
             <div className="absolute -right-6 -top-6 text-red-50 dark:text-red-900/20 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
                 className="w-24 h-24"
@@ -216,8 +212,7 @@ export default function DashboardOverview() {
             </div>
           </div>
 
-          {/* Card 4 */}
-          <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-amber-500 relative overflow-hidden group transition-colors">
+          <div className="min-w-[260px] sm:min-w-0 snap-center bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border-l-4 border-amber-500 relative overflow-hidden group transition-colors">
             <div className="absolute -right-6 -top-6 text-amber-50 dark:text-amber-900/20 opacity-50 group-hover:scale-110 transition-transform duration-500">
               <svg
                 className="w-24 h-24"
@@ -253,7 +248,9 @@ export default function DashboardOverview() {
                 </p>
               </div>
             </div>
-            <div className="h-[320px] w-full min-w-0 mt-2">
+
+            {/* 🚀 FIX: Forced single-line horizontal scrolling for the Pie Chart legend on mobile */}
+            <div className="h-[320px] w-full min-w-0 mt-2 [&_.recharts-default-legend]:!flex [&_.recharts-default-legend]:!flex-nowrap [&_.recharts-default-legend]:!overflow-x-auto [&_.recharts-default-legend]:!justify-start sm:[&_.recharts-default-legend]:!justify-center [&_.recharts-legend-item]:!whitespace-nowrap [&_.recharts-legend-item]:!mr-4 [&_.recharts-default-legend]:pb-2 custom-scrollbar hide-scrollbar-on-mobile">
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
@@ -288,12 +285,12 @@ export default function DashboardOverview() {
                   />
                   <Legend
                     verticalAlign="bottom"
-                    height={36}
                     iconType="circle"
                     wrapperStyle={{
-                      fontSize: "12px",
+                      fontSize: "11px",
                       fontWeight: 600,
                       color: "#94a3b8",
+                      width: "100%",
                     }}
                   />
                 </PieChart>
