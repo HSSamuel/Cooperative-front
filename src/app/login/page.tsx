@@ -39,9 +39,6 @@ function LoginForm() {
 
       localStorage.setItem("coop_user", JSON.stringify(response.data.user));
 
-      // 2. Set the cookie explicitly
-      document.cookie = `coop_token=${token}; path=/; max-age=86400; Secure; SameSite=Lax`;
-
       toast.success("Welcome back!");
 
       const redirectUrl = searchParams.get("redirect");

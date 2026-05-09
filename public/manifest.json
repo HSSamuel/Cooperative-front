@@ -4,17 +4,17 @@
   "description": "ASCON Staff Multi-Purpose Co-operative Society",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#1b5e3a",
+  "background_color": "#ffffff",
   "theme_color": "#1b5e3a",
   "icons": [
     {
-      "src": "/ascon-logo.png",
+      "src": "/pwa-icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/ascon-logo.png",
+      "src": "/pwa-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
