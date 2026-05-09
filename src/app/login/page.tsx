@@ -27,23 +27,16 @@ function LoginForm() {
         password,
       });
 
-      // 1. Safety check to ensure the backend actually sent the token
-      const token = response.data.token;
-      if (!token) {
-        toast.error(
-          "Backend missing token. Ensure backend changes are deployed.",
-        );
-        setIsLoading(false);
-        return;
-      }
-
+      // 1. Save ONLY the user profile data to local storage.
+      // The browser has already automatically saved the HttpOnly token cookie!
       localStorage.setItem("coop_user", JSON.stringify(response.data.user));
 
       toast.success("Welcome back!");
 
       const redirectUrl = searchParams.get("redirect");
 
-      // 3. USE window.location.href INSTEAD OF router.push()
+      // 2. Redirect using window.location.href to force a hard navigation,
+      // ensuring the browser attaches the new cookie to subsequent requests.
       if (redirectUrl) {
         window.location.href = decodeURIComponent(redirectUrl);
       } else if (
