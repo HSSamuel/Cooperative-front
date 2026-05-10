@@ -147,6 +147,7 @@ export default function ProfileBioDataPage() {
                 <rect width="100%" height="100%" fill="url(#grid)" />
               </svg>
             </div>
+            {/* ... inside the Profile Card ... */}
             <div className="relative z-10 w-28 h-28 rounded-full border-4 border-white/20 overflow-hidden mb-4 bg-slate-700 flex items-center justify-center text-4xl font-bold shadow-lg">
               {user.avatarUrl ? (
                 <img
@@ -158,9 +159,13 @@ export default function ProfileBioDataPage() {
                 user.lastName?.charAt(0) || "U"
               )}
             </div>
-            <h2 className="relative z-10 text-2xl font-bold tracking-wide mb-1">
-              {user.firstName} {user.lastName}
+
+            {/* 🚀 FIX: Dynamically render Other Name if it exists */}
+            <h2 className="relative z-10 text-2xl font-bold tracking-wide mb-1 text-center">
+              {user.firstName} {user.otherName ? `${user.otherName} ` : ""}
+              {user.lastName}
             </h2>
+
             <p className="relative z-10 text-sm text-emerald-100/70 mb-2 truncate max-w-full">
               {user.email}
             </p>

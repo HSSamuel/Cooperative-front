@@ -426,14 +426,18 @@ export default function DashboardClientLayout({
               )}
             </div>
 
+            {/* ... inside the top-right header section ... */}
             <div className="relative cursor-pointer hover:opacity-80 transition-opacity pl-2">
               <Link
                 href="/dashboard/profile"
                 className="flex items-center gap-3"
               >
                 <div className="text-right hidden md:block">
+                  {/* 🚀 FIX: Dynamically render Other Name in the header */}
                   <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                    {user.firstName} {user.lastName}
+                    {user.firstName}{" "}
+                    {user.otherName ? `${user.otherName} ` : ""}
+                    {user.lastName}
                   </p>
                   <p className="text-[10px] font-bold text-[#1b5e3a] dark:text-emerald-400 uppercase tracking-widest">
                     {user.role ? user.role.replace("_", " ") : "COOPERATOR"}
