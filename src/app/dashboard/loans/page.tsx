@@ -687,10 +687,13 @@ export default function LoansPage() {
                           )}
                           <br />
                           {/* 🚀 FIX: Cleaned up the time format */}
-                          {new Date(loan.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {new Date(loan.createdAt).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
                         </td>
                       </tr>
                     );

@@ -2,7 +2,21 @@ import axios from "axios";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
-  withCredentials: true,
+  withCredentials: true, // Still useful if you eventually switch to a unified custom domain
+});
+
+// 🚀 NEW: Intercept requests to attach the Bearer token manually
+// This bypasses the Third-Party Cookie block when Netlify communicates with Render
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    // Attempt to grab the raw token from localStorage
+    const token = localStorage.getItem("coop_token_raw");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
 });
 
 // Intercept responses to handle global 401 Unauthorized errors and Zod validations
@@ -15,6 +29,7 @@ apiClient.interceptors.response.use(
         // Clear orphaned local storage
         if (typeof window !== "undefined") {
           localStorage.removeItem("coop_user");
+          localStorage.removeItem("coop_token_raw"); // Clear the raw token as well
           // Forcefully redirect to login
           window.location.href = "/login";
         }

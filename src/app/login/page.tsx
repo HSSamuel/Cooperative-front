@@ -43,6 +43,7 @@ function LoginForm() {
       }
 
       localStorage.setItem("coop_user", JSON.stringify(response.data.user));
+      localStorage.setItem("coop_token_raw", token);
       toast.success("Welcome back!");
 
       const redirectUrl = searchParams.get("redirect");

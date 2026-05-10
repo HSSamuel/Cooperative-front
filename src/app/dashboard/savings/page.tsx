@@ -283,7 +283,7 @@ export default function SavingsPage() {
                           year: "numeric",
                         })}
                         <br />
-                        {new Date(txn.createdAt).toLocaleTimeString([], {
+                        {new Date(txn.createdAt).toLocaleTimeString("en-US", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}

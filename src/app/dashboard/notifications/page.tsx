@@ -33,7 +33,7 @@ export default function NotificationsPage() {
               day: "numeric",
               year: "numeric",
             }),
-            time: dateObj.toLocaleTimeString(undefined, {
+            time: dateObj.toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
             }),
