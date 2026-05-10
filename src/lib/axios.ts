@@ -2,16 +2,28 @@ import axios from "axios";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
-  withCredentials: true, // Still useful if you eventually switch to a unified custom domain
+  withCredentials: true,
 });
 
-// 🚀 NEW: Intercept requests to attach the Bearer token manually
-// This bypasses the Third-Party Cookie block when Netlify communicates with Render
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+// Helper to process paused requests once the token is refreshed
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Request Interceptor
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    // Attempt to grab the raw token from localStorage
     const token = localStorage.getItem("coop_token_raw");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -19,33 +31,76 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Intercept responses to handle global 401 Unauthorized errors and Zod validations
+// Response Interceptor
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response) {
-      // 1. Handle Session Expiration
-      if (error.response.status === 401) {
-        // Clear orphaned local storage
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("coop_user");
-          localStorage.removeItem("coop_token_raw"); // Clear the raw token as well
-          // Forcefully redirect to login
-          window.location.href = "/login";
-        }
+  async (error) => {
+    const originalRequest = error.config;
+
+    // 1. Zod Validation Error Handling
+    if (error.response?.status === 400 && error.response.data?.errors) {
+      error.response.data.message = error.response.data.errors[0];
+    }
+
+    // 2. Token Refresh Logic
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Prevent infinite loops on the refresh endpoint itself
+      if (originalRequest.url.includes("/auth/refresh")) {
+        return handleHardLogout(error);
       }
 
-      // 2. 🚀 Handle Zod Schema Validation Errors
-      // Maps the detailed Zod error array into the main message property
-      // so the frontend toast notifications display the exact field failure seamlessly.
-      if (error.response.status === 400 && error.response.data?.errors) {
-        // We extract the first, most relevant validation error to show to the user
-        error.response.data.message = error.response.data.errors[0];
+      if (isRefreshing) {
+        // If a refresh is already happening, queue this request until it finishes
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Silently request a new access token
+        const { data } = await axios.post(
+          `${apiClient.defaults.baseURL}/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("coop_token_raw", data.token);
+        }
+
+        // Apply new token to the original failed request
+        originalRequest.headers.Authorization = `Bearer ${data.token}`;
+
+        processQueue(null, data.token);
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        return handleHardLogout(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
   },
 );
+
+// Utility to completely wipe the session if the refresh token is dead
+const handleHardLogout = (error: any) => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("coop_user");
+    localStorage.removeItem("coop_token_raw");
+    window.location.href = "/login";
+  }
+  return Promise.reject(error);
+};
 
 export default apiClient;
