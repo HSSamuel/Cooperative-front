@@ -7,6 +7,7 @@ import Image from "next/image";
 import apiClient from "@/lib/axios";
 import { useSocket } from "../../hooks/useSocket";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { clearAuthCookie } from "../actions/auth"; // 🚀 FIX: Imported Server Action
 
 export default function AdminLayout({
   children,
@@ -141,9 +142,15 @@ export default function AdminLayout({
     } catch (error) {
       console.error("Logout error", error);
     }
+
+    // 1. Clear all Local Storage data
     localStorage.removeItem("coop_user");
-    document.cookie =
-      "coop_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
+    localStorage.removeItem("coop_token_raw"); // 🚀 FIX: Also wipe the raw JWT
+
+    // 2. Destroy the HttpOnly cookie via Server Action
+    await clearAuthCookie(); // 🚀 FIX: Replaced document.cookie with Server Action
+
+    // 3. Redirect
     router.push("/login");
   };
 

@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { fetchFinancialData, clearFinanceData } from "../../store/financeSlice";
 import type { AppDispatch } from "../../store";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { clearAuthCookie } from "../actions/auth"; // 🚀 FIX: Imported Server Action
 
 export default function DashboardClientLayout({
   children,
@@ -100,18 +101,16 @@ export default function DashboardClientLayout({
     };
   }, [socket]);
 
- useEffect(() => {
-   const storedUser = localStorage.getItem("coop_user");
-   if (storedUser) {
-     setUser(JSON.parse(storedUser));
-     fetchNotifications();
-     // 🚀 REMOVED: dispatch(fetchFinancialData());
-     // The server already injected the initialAccount, initialLoans, and initialTransactions via the useRef block above.
-     // We only need to fetch via Redux later if the user interacts with the app (e.g., makes a deposit).
-   } else {
-     router.push("/login");
-   }
- }, [router, dispatch]);
+  useEffect(() => {
+    const storedUser = localStorage.getItem("coop_user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      fetchNotifications();
+      // 🚀 FIX: Removed the redundant dispatch(fetchFinancialData()) here to prevent double-fetching on mount.
+    } else {
+      router.push("/login");
+    }
+  }, [router, dispatch]);
 
   const fetchNotifications = async () => {
     try {
@@ -147,10 +146,15 @@ export default function DashboardClientLayout({
     } catch (error) {
       console.error("Logout error", error);
     }
-    localStorage.removeItem("coop_user");
-    document.cookie =
-      "coop_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
 
+    // 1. Clear all Local Storage data
+    localStorage.removeItem("coop_user");
+    localStorage.removeItem("coop_token_raw"); // 🚀 FIX: Also wipe the raw JWT
+
+    // 2. Destroy the HttpOnly cookie via Server Action
+    await clearAuthCookie(); // 🚀 FIX: Replaced document.cookie with Server Action
+
+    // 3. Clear Redux and Redirect
     dispatch(clearFinanceData());
     router.push("/login");
   };
@@ -371,7 +375,6 @@ export default function DashboardClientLayout({
                     className="fixed inset-0 z-40"
                     onClick={() => setIsNotificationsOpen(false)}
                   />
-                  {/* 🚀 FIX: Made the dropdown fixed and fully centered on mobile, reverting to normal absolute alignment on desktop */}
                   <div className="fixed sm:absolute top-[84px] sm:top-auto left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0 mt-0 sm:mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-sm bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 flex justify-between items-center">
                       <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
