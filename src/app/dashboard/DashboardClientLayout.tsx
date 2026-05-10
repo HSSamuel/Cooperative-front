@@ -100,16 +100,18 @@ export default function DashboardClientLayout({
     };
   }, [socket]);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("coop_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      fetchNotifications();
-      dispatch(fetchFinancialData());
-    } else {
-      router.push("/login");
-    }
-  }, [router, dispatch]);
+ useEffect(() => {
+   const storedUser = localStorage.getItem("coop_user");
+   if (storedUser) {
+     setUser(JSON.parse(storedUser));
+     fetchNotifications();
+     // 🚀 REMOVED: dispatch(fetchFinancialData());
+     // The server already injected the initialAccount, initialLoans, and initialTransactions via the useRef block above.
+     // We only need to fetch via Redux later if the user interacts with the app (e.g., makes a deposit).
+   } else {
+     router.push("/login");
+   }
+ }, [router, dispatch]);
 
   const fetchNotifications = async () => {
     try {

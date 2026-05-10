@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -62,15 +63,27 @@ export default function ProfileBioDataPage() {
 
     setIsUploadingImage(true);
     try {
+      // 1. Get the secure signature from our Node backend
+      const { data: sigData } = await apiClient.get("/upload/signature");
+
+      // 2. Prepare payload for Cloudinary
       const formData = new FormData();
-      formData.append("image", file);
-      const res = await apiClient.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setEditForm({ ...editForm, avatarUrl: res.data.url });
+      formData.append("file", file);
+      formData.append("api_key", sigData.apiKey);
+      formData.append("timestamp", sigData.timestamp);
+      formData.append("signature", sigData.signature);
+      formData.append("folder", "ascon_coop_avatars");
+
+      // 3. Upload DIRECTLY to Cloudinary (Bypassing our backend memory)
+      const cloudRes = await axios.post(
+        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+        formData,
+      );
+
+      setEditForm({ ...editForm, avatarUrl: cloudRes.data.secure_url });
       toast.success("Image uploaded! Don't forget to save your changes.");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to upload image.");
+      toast.error("Failed to upload image. Please try again.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -406,7 +419,6 @@ export default function ProfileBioDataPage() {
               onSubmit={handleUpdateProfile}
               className="p-6 sm:p-8 space-y-5"
             >
-              {/* 🚀 FIX: Mobile-friendly Image Upload */}
               <div className="flex flex-col items-center justify-center mb-6">
                 <label className="relative cursor-pointer group">
                   <div className="relative w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-700 overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-3xl font-bold text-slate-500 dark:text-slate-400 shadow-sm">
@@ -420,7 +432,6 @@ export default function ProfileBioDataPage() {
                       editForm.lastName?.charAt(0) || "U"
                     )}
 
-                    {/* Dark overlay with hover effect (Desktop) */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all">
                       <svg
                         className="w-6 h-6 text-white mb-1"
@@ -447,7 +458,6 @@ export default function ProfileBioDataPage() {
                     </div>
                   </div>
 
-                  {/* Permanent Camera Badge (Mobile Discoverability) */}
                   <div className="absolute bottom-0 right-0 bg-[#1b5e3a] p-1.5 rounded-full border-2 border-white dark:border-[#1B1B25] shadow-sm">
                     <svg
                       className="w-4 h-4 text-white"
@@ -464,7 +474,6 @@ export default function ProfileBioDataPage() {
                     </svg>
                   </div>
 
-                  {/* Hidden Input field triggered by tapping anywhere on the label */}
                   <input
                     type="file"
                     accept="image/*"
@@ -485,7 +494,6 @@ export default function ProfileBioDataPage() {
                 )}
               </div>
 
-              {/* 🚀 FIX: First Name and Last Name Fields Restored */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
