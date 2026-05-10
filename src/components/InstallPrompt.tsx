@@ -2,18 +2,41 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { usePathname } from "next/navigation";
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [hasShown, setHasShown] = useState(false);
+  const pathname = usePathname();
 
+  // 1. Capture the installation event whenever the browser fires it (usually on first load)
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
+      // Prevent the mini-infobar from appearing on mobile natively
       e.preventDefault();
       // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
+    };
 
-      // Show our custom popup
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+    };
+  }, []);
+
+  // 2. Trigger or hide the custom toast based on the current route
+  useEffect(() => {
+    // Restrict prompt strictly to these routes
+    const allowedPaths = ["/dashboard", "/dashboard/profile"];
+    const isAllowed = allowedPaths.includes(pathname);
+
+    if (deferredPrompt && isAllowed && !hasShown) {
+      setHasShown(true); // Ensure we only trigger it once per session to avoid spamming
+
       toast.custom(
         (t) => (
           <div
@@ -45,10 +68,10 @@ export function InstallPrompt() {
               <button
                 onClick={async () => {
                   toast.dismiss(t.id);
-                  if (e) {
+                  if (deferredPrompt) {
                     // Trigger the native browser install prompt
-                    (e as any).prompt();
-                    const { outcome } = await (e as any).userChoice;
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
                     if (outcome === "accepted") {
                       setDeferredPrompt(null);
                     }
@@ -67,19 +90,17 @@ export function InstallPrompt() {
             </div>
           </div>
         ),
-        { duration: Infinity, position: "bottom-center" }, // Stays on screen until clicked
+        {
+          id: "pwa-install-prompt",
+          duration: Infinity,
+          position: "bottom-center",
+        },
       );
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
-    };
-  }, []);
+    } else if (!isAllowed) {
+      // Cleanly dismiss the toast if the user navigates away to loans/settings/etc.
+      toast.dismiss("pwa-install-prompt");
+    }
+  }, [pathname, deferredPrompt, hasShown]);
 
   return null;
 }
