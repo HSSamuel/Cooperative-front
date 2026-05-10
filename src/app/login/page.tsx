@@ -8,7 +8,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { syncAuthCookie } from "../actions/auth";
 
-// 🚀 FIX: Extract the form logic into a sub-component so it can be wrapped in Suspense
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,47 +17,55 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
- const handleLogin = async (e: React.FormEvent) => {
-   e.preventDefault();
-   setIsLoading(true);
-   try {
-     const response = await apiClient.post("/auth/login", {
-       fileNumber,
-       password,
-     });
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await apiClient.post("/auth/login", {
+        fileNumber,
+        password,
+      });
 
-     const token = response.data.token;
-     if (!token) {
-       toast.error("Backend missing token.");
-       setIsLoading(false);
-       return;
-     }
+      const token = response.data?.token;
+      if (!token) {
+        toast.error(
+          "Backend missing token. Ensure backend changes are deployed.",
+        );
+        setIsLoading(false);
+        return;
+      }
 
-     // 🚀 Securely sync the token to Next.js SSR via Server Action
-     await syncAuthCookie(token);
+      // 🚀 ISOLATE Server Action: Prevent local network quirks from crashing login
+      try {
+        await syncAuthCookie(token);
+      } catch (syncErr) {
+        console.warn("Next.js Server Action sync bypassed.");
+      }
 
-     localStorage.setItem("coop_user", JSON.stringify(response.data.user));
-     toast.success("Welcome back!");
+      localStorage.setItem("coop_user", JSON.stringify(response.data.user));
+      toast.success("Welcome back!");
 
-     const redirectUrl = searchParams.get("redirect");
+      const redirectUrl = searchParams.get("redirect");
 
-     // 🚀 Use window.location.href to force Next.js to read the new cookie on route load
-     if (redirectUrl) {
-       window.location.href = decodeURIComponent(redirectUrl);
-     } else if (
-       response.data.user.role === "ADMIN" ||
-       response.data.user.role === "SUPER_ADMIN"
-     ) {
-       window.location.href = "/admin";
-     } else {
-       window.location.href = "/dashboard";
-     }
-   } catch (err: any) {
-     toast.error(err.response?.data?.message || "Invalid credentials.");
-   } finally {
-     setIsLoading(false);
-   }
- };
+      if (redirectUrl) {
+        window.location.href = decodeURIComponent(redirectUrl);
+      } else if (
+        response.data.user.role === "ADMIN" ||
+        response.data.user.role === "SUPER_ADMIN"
+      ) {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/dashboard";
+      }
+    } catch (err: any) {
+      // 🚀 UNMASK: Expose the true error message to the UI instead of a generic fallback
+      toast.error(
+        err.response?.data?.message || err.message || "Invalid credentials.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <form className="space-y-5" onSubmit={handleLogin}>
@@ -70,7 +77,10 @@ function LoginForm() {
           type="text"
           required
           value={fileNumber}
-          onChange={(e) => setFileNumber(e.target.value)}
+          // 🚀 REGEX UPGRADE: Obliterates ALL spaces (including internal ones) as you type
+          onChange={(e) =>
+            setFileNumber(e.target.value.replace(/\s+/g, "").toUpperCase())
+          }
           placeholder="ASCON-001"
           className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
         />
@@ -123,7 +133,7 @@ function LoginForm() {
                 />
               </svg>
             ) : (
-               <svg
+              <svg
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -184,8 +194,13 @@ export default function LoginPage() {
             Sign In
           </h2>
 
-          {/* 🚀 FIX: Wrap the form in Suspense to prevent build errors with useSearchParams */}
-          <Suspense fallback={<div className="text-center py-4 text-slate-500 font-bold">Verifying security parameters...</div>}>
+          <Suspense
+            fallback={
+              <div className="text-center py-4 text-slate-500 font-bold">
+                Verifying security parameters...
+              </div>
+            }
+          >
             <LoginForm />
           </Suspense>
 

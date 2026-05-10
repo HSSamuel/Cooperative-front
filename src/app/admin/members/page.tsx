@@ -613,11 +613,32 @@ export default function MemberDirectoryPage() {
                           <h3 className="text-3xl font-bold mb-4">
                             ₦{formatNaira(memberAccount.totalSavings)}
                           </h3>
-                          <div className="bg-white/10 p-3 rounded-sm flex justify-between items-center text-sm">
-                            <span className="text-slate-300">Credit Limit</span>
-                            <span className="font-bold text-[#00B5E2]">
-                              ₦{formatNaira(memberAccount.availableCreditLimit)}
-                            </span>
+
+                          <div className="space-y-2">
+                            <div className="bg-white/10 p-3 rounded-sm flex justify-between items-center text-sm">
+                              <span className="text-slate-300">
+                                Credit Limit
+                              </span>
+                              <span className="font-bold text-[#00B5E2]">
+                                ₦
+                                {formatNaira(
+                                  memberAccount.availableCreditLimit,
+                                )}
+                              </span>
+                            </div>
+
+                            {/* 🚀 FIX: Now displays the real-time calculated savings for the current month */}
+                            <div className="bg-white/10 p-3 rounded-sm flex justify-between items-center text-sm">
+                              <span className="text-slate-300">
+                                Current Monthly Savings
+                              </span>
+                              <span className="font-bold text-[#20C997]">
+                                ₦
+                                {formatNaira(
+                                  memberAccount.currentMonthSavings || 0,
+                                )}
+                              </span>
+                            </div>
                           </div>
                         </div>
 

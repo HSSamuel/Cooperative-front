@@ -145,7 +145,8 @@ export default function RegisterPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                // 🚀 FIX: Auto-lowercase and trim spaces for emails
+                onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
                 className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
               />
             </div>
@@ -162,7 +163,10 @@ export default function RegisterPage() {
                 type="text"
                 required
                 value={fileNumber}
-                onChange={(e) => setFileNumber(e.target.value)}
+                // 🚀 FIX: Auto-uppercase and trim spaces as the user types
+                onChange={(e) =>
+                  setFileNumber(e.target.value.trim().toUpperCase())
+                }
                 placeholder="ASCON-001"
                 className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
               />

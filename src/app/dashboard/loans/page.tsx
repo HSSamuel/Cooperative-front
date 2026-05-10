@@ -260,9 +260,11 @@ export default function LoansPage() {
               const startDate = new Date(loan.createdAt);
               const endDate = new Date(loan.createdAt);
               endDate.setMonth(endDate.getMonth() + loanTenure);
+
+              // 🚀 FIX: Highly readable "May 10, 2026" date options
               const dateOptions: Intl.DateTimeFormatOptions = {
+                month: "long",
                 day: "numeric",
-                month: "short",
                 year: "numeric",
               };
 
@@ -315,7 +317,8 @@ export default function LoansPage() {
                       </h3>
                       <p className="text-emerald-100/70 text-xs sm:text-sm font-medium mt-1">
                         Disbursed on{" "}
-                        {startDate.toLocaleDateString("en-GB", dateOptions)}
+                        {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
+                        {startDate.toLocaleDateString("en-US", dateOptions)}
                       </p>
                     </div>
 
@@ -456,7 +459,8 @@ export default function LoansPage() {
                           Start Date
                         </p>
                         <p className="text-xs sm:text-sm md:text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
-                          {startDate.toLocaleDateString("en-GB", dateOptions)}
+                          {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
+                          {startDate.toLocaleDateString("en-US", dateOptions)}
                         </p>
                       </div>
                     </div>
@@ -482,7 +486,8 @@ export default function LoansPage() {
                           End Date
                         </p>
                         <p className="text-xs sm:text-sm md:text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
-                          {endDate.toLocaleDateString("en-GB", dateOptions)}
+                          {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
+                          {endDate.toLocaleDateString("en-US", dateOptions)}
                         </p>
                       </div>
                     </div>
@@ -671,9 +676,21 @@ export default function LoansPage() {
                           {balance > 0 ? `₦${formatNaira(balance)}` : "₦0.00"}
                         </td>
                         <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
-                          {new Date(loan.createdAt).toLocaleDateString("en-GB")}
+                          {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
+                          {new Date(loan.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            },
+                          )}
                           <br />
-                          {new Date(loan.createdAt).toLocaleTimeString("en-GB")}
+                          {/* 🚀 FIX: Cleaned up the time format */}
+                          {new Date(loan.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </td>
                       </tr>
                     );
@@ -728,7 +745,6 @@ export default function LoansPage() {
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-medium">
                     ₦
                   </span>
-                  {/* 🚀 FIX: Added min="0.01" and step="0.01" for fractional Kobo payments */}
                   <input
                     type="number"
                     required

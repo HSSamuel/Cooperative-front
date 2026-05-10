@@ -167,34 +167,39 @@ export default function SavingsPage() {
 
         {/* Transaction Ledger Table */}
         <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 w-full transition-colors">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-            Transaction Ledger
-          </h3>
+          {/* 🚀 FIX: Transaction Ledger Header with CTA properly placed */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4 gap-4">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+              Transaction Ledger
+            </h3>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-[#1b5e3a] text-white px-4 py-2 rounded-sm flex items-center justify-center gap-2 text-sm font-bold transition-colors hover:bg-[#124228] shadow-sm w-full sm:w-auto"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New Deposit
+            </button>
+          </div>
 
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
               <thead className="bg-slate-50 dark:bg-[#12121A]/50">
                 <tr>
-                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-center w-28 border border-slate-200 dark:border-slate-800">
-                    <button
-                      onClick={() => setIsAddModalOpen(true)}
-                      className="bg-[#1b5e3a] text-white px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full transition-colors hover:bg-[#124228] shadow-sm"
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      New Deposit
-                    </button>
+                  {/* 🚀 FIX: Proper semantic header for the Status column */}
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-center w-16 border border-slate-200 dark:border-slate-800">
+                    Status
                   </th>
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Effective Month
@@ -202,13 +207,16 @@ export default function SavingsPage() {
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Description
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-center border border-slate-200 dark:border-slate-800">
+                  {/* Change text-center to text-right here 👇 */}
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
                     Debit
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-center border border-slate-200 dark:border-slate-800">
+                  {/* Change text-center to text-right here 👇 */}
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
                     Credit
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-center border border-slate-200 dark:border-slate-800">
+                  {/* Change text-center to text-right here 👇 */}
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
                     Dividends
                   </th>
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
@@ -232,10 +240,11 @@ export default function SavingsPage() {
                       key={txn._id}
                       className="hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
                     >
-                      <td className="py-3 px-4 border border-slate-200 dark:border-slate-800">
-                        <button className="bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-sm flex items-center justify-center gap-1 text-xs mx-auto w-full shadow-sm cursor-default">
+                      <td className="py-3 px-4 border border-slate-200 dark:border-slate-800 text-center">
+                        {/* 🚀 FIX: Cleaner, professional status badge */}
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 text-[#1b5e3a] dark:text-emerald-400 p-1.5 rounded-full inline-flex items-center justify-center shadow-sm">
                           <svg
-                            className="w-3 h-3"
+                            className="w-4 h-4"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -243,11 +252,11 @@ export default function SavingsPage() {
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              strokeWidth={2.5}
+                              d="M5 13l4 4L19 7"
                             />
                           </svg>
-                        </button>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium border border-slate-200 dark:border-slate-800">
                         {txn.effectiveMonth || "N/A"}
@@ -267,9 +276,17 @@ export default function SavingsPage() {
                       </td>
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-right border border-slate-200 dark:border-slate-800"></td>
                       <td className="py-3 px-4 text-slate-500 dark:text-slate-500 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
-                        {new Date(txn.createdAt).toLocaleDateString()}
+                        {/* 🚀 FIX: Explicit, readable date formatting */}
+                        {new Date(txn.createdAt).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                         <br />
-                        {new Date(txn.createdAt).toLocaleTimeString()}
+                        {new Date(txn.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </td>
                     </tr>
                   ))
@@ -362,7 +379,7 @@ export default function SavingsPage() {
       </div>
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-up border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
               <h3 className="font-bold text-slate-800 dark:text-slate-200">

@@ -301,7 +301,6 @@ export default function ProfileBioDataPage() {
                   {user.firstName}
                 </span>
               </div>
-              {/* 🚀 FIX: Display Other Name on the User's Profile */}
               <div className="bg-slate-50 dark:bg-[#12121A]/50 p-4 rounded-sm border border-slate-100 dark:border-slate-800/50 transition-colors">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                   Other Name
@@ -363,7 +362,6 @@ export default function ProfileBioDataPage() {
                   Official Join Date
                 </span>
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200 break-words">
-                  {/* 🚀 FIX: Prioritize the live date from Redux, fallback to local storage */}
                   {formatDate(
                     account?.cooperatorId?.dateJoined ||
                       user.dateJoined ||
@@ -408,21 +406,51 @@ export default function ProfileBioDataPage() {
               onSubmit={handleUpdateProfile}
               className="p-6 sm:p-8 space-y-5"
             >
+              {/* 🚀 FIX: Mobile-friendly Image Upload */}
               <div className="flex flex-col items-center justify-center mb-6">
-                <div className="relative w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-700 overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-3xl font-bold text-slate-500 dark:text-slate-400 group shadow-sm">
-                  {editForm.avatarUrl || user?.avatarUrl ? (
-                    <img
-                      src={editForm.avatarUrl || user.avatarUrl}
-                      alt="Avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    editForm.lastName?.charAt(0) || "U"
-                  )}
+                <label className="relative cursor-pointer group">
+                  <div className="relative w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-700 overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-3xl font-bold text-slate-500 dark:text-slate-400 shadow-sm">
+                    {editForm.avatarUrl || user?.avatarUrl ? (
+                      <img
+                        src={editForm.avatarUrl || user.avatarUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      editForm.lastName?.charAt(0) || "U"
+                    )}
 
-                  <label className="absolute inset-0 bg-black/50 hidden group-hover:flex flex-col items-center justify-center cursor-pointer transition-all">
+                    {/* Dark overlay with hover effect (Desktop) */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all">
+                      <svg
+                        className="w-6 h-6 text-white mb-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      <span className="text-[10px] text-white font-bold">
+                        Upload
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Permanent Camera Badge (Mobile Discoverability) */}
+                  <div className="absolute bottom-0 right-0 bg-[#1b5e3a] p-1.5 rounded-full border-2 border-white dark:border-[#1B1B25] shadow-sm">
                     <svg
-                      className="w-6 h-6 text-white mb-1"
+                      className="w-4 h-4 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -430,45 +458,65 @@ export default function ProfileBioDataPage() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
+                        strokeWidth={2.5}
                         d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
                       />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
                     </svg>
-                    <span className="text-[10px] text-white font-bold">
-                      Upload
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={isUploadingImage}
-                    />
-                  </label>
-                </div>
+                  </div>
+
+                  {/* Hidden Input field triggered by tapping anywhere on the label */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={isUploadingImage}
+                  />
+                </label>
+
                 {isUploadingImage ? (
-                  <p className="text-xs text-[#1b5e3a] dark:text-emerald-400 font-bold mt-2 animate-pulse">
+                  <p className="text-xs text-[#1b5e3a] dark:text-emerald-400 font-bold mt-3 animate-pulse">
                     Uploading image securely...
                   </p>
                 ) : (
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">
-                    Hover to change photo
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-3 uppercase tracking-wider font-semibold">
+                    Tap photo to change
                   </p>
                 )}
               </div>
 
+              {/* 🚀 FIX: First Name and Last Name Fields Restored */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {/* Existing First Name Input */}
-                {/* Existing Last Name Input */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.firstName || ""}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, firstName: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#12121A]/50 border border-slate-200 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-[#1b5e3a] dark:focus:border-emerald-500 text-slate-800 dark:text-slate-200 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.lastName || ""}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, lastName: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#12121A]/50 border border-slate-200 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-[#1b5e3a] dark:focus:border-emerald-500 text-slate-800 dark:text-slate-200 transition-all"
+                  />
+                </div>
               </div>
 
-              {/* 🚀 FIX: Editable Input for Other Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Other Name{" "}
@@ -490,7 +538,6 @@ export default function ProfileBioDataPage() {
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Email Address
                 </label>
-                {/* Existing Email Input... */}
                 <input
                   type="email"
                   required
