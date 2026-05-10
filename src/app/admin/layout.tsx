@@ -7,7 +7,7 @@ import Image from "next/image";
 import apiClient from "@/lib/axios";
 import { useSocket } from "../../hooks/useSocket";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { clearAuthCookie } from "../actions/auth"; // 🚀 FIX: Imported Server Action
+import { clearAuthCookie } from "../actions/auth";
 
 export default function AdminLayout({
   children,
@@ -18,6 +18,7 @@ export default function AdminLayout({
   const [adminUser, setAdminUser] = useState({
     firstName: "Admin",
     lastName: "",
+    otherName: "",
     role: "ADMIN",
     fileNumber: "",
     _id: "",
@@ -28,6 +29,10 @@ export default function AdminLayout({
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  // 🚀 FIX: Added loading states for log out and exit
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   const socket = useSocket(adminUser?._id || adminUser?.id);
 
@@ -133,24 +138,25 @@ export default function AdminLayout({
   };
 
   const handleExitConsole = () => {
+    // 🚀 FIX: Set loading state
+    setIsExiting(true);
     router.push("/dashboard");
   };
 
   const handleLogout = async () => {
+    // 🚀 FIX: Set loading state
+    setIsLoggingOut(true);
     try {
       await apiClient.post("/auth/logout");
     } catch (error) {
       console.error("Logout error", error);
     }
 
-    // 1. Clear all Local Storage data
     localStorage.removeItem("coop_user");
-    localStorage.removeItem("coop_token_raw"); // 🚀 FIX: Also wipe the raw JWT
+    localStorage.removeItem("coop_token_raw");
 
-    // 2. Destroy the HttpOnly cookie via Server Action
-    await clearAuthCookie(); // 🚀 FIX: Replaced document.cookie with Server Action
+    await clearAuthCookie();
 
-    // 3. Redirect
     router.push("/login");
   };
 
@@ -246,47 +252,97 @@ export default function AdminLayout({
           })}
           <div className="my-4 border-t border-[#313140] mx-4"></div>
 
+          {/* 🚀 FIX: Spinner added for Exit */}
           <button
             onClick={handleExitConsole}
-            className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-[#00B5E2] hover:bg-white/5 hover:text-[#00B5E2] font-medium"
+            disabled={isExiting}
+            className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-[#00B5E2] hover:bg-white/5 hover:text-[#00B5E2] font-medium disabled:opacity-50"
           >
-            <svg
-              className="w-5 h-5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-              />
-            </svg>
+            {isExiting ? (
+              <svg
+                className="animate-spin w-5 h-5 flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                />
+              </svg>
+            )}
             <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
-              Exit to Coop View
+              {isExiting ? "Exiting..." : "Exit to Coop View"}
             </span>
           </button>
 
+          {/* 🚀 FIX: Spinner added for log out */}
           <button
             onClick={handleLogout}
-            className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-red-400 hover:bg-white/5 hover:text-red-300 font-medium"
+            disabled={isLoggingOut}
+            className="flex items-center justify-start gap-4 w-full px-6 py-3.5 transition-all duration-200 border-l-4 border-transparent text-red-400 hover:bg-white/5 hover:text-red-300 font-medium disabled:opacity-50"
           >
-            <svg
-              className="w-5 h-5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
+            {isLoggingOut ? (
+              <svg
+                className="animate-spin w-5 h-5 flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            )}
             <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
-              Log Out
+              {isLoggingOut ? "Logging Out..." : "Log Out"}
             </span>
           </button>
         </nav>
@@ -412,7 +468,9 @@ export default function AdminLayout({
 
             <div className="text-right hidden md:block pl-2">
               <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                {adminUser.lastName} {adminUser.firstName}
+                {adminUser.firstName}{" "}
+                {adminUser.otherName ? `${adminUser.otherName} ` : ""}
+                {adminUser.lastName}
               </p>
               <p className="text-[10px] font-bold text-[#1b5e3a] dark:text-emerald-400 uppercase tracking-widest">
                 {adminUser.role.replace("_", " ")}

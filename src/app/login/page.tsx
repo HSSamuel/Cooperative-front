@@ -35,7 +35,7 @@ function LoginForm() {
         return;
       }
 
-      // 🚀 ISOLATE Server Action: Prevent local network quirks from crashing login
+      // ISOLATE Server Action: Prevent local network quirks from crashing login
       try {
         await syncAuthCookie(token);
       } catch (syncErr) {
@@ -59,7 +59,6 @@ function LoginForm() {
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
-      // 🚀 UNMASK: Expose the true error message to the UI instead of a generic fallback
       toast.error(
         err.response?.data?.message || err.message || "Invalid credentials.",
       );
@@ -78,7 +77,6 @@ function LoginForm() {
           type="text"
           required
           value={fileNumber}
-          // 🚀 REGEX UPGRADE: Obliterates ALL spaces (including internal ones) as you type
           onChange={(e) =>
             setFileNumber(e.target.value.replace(/\s+/g, "").toUpperCase())
           }
@@ -152,12 +150,39 @@ function LoginForm() {
         </div>
       </div>
 
+      {/* 🚀 FIX: Added spinner, flex, justify-center, items-center, and gap-2 */}
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-2.5 px-4 bg-[#1b5e3a] hover:bg-[#124228] text-white text-sm font-bold rounded-sm shadow-sm transition-colors disabled:opacity-70 mt-2"
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1b5e3a] hover:bg-[#124228] text-white text-sm font-bold rounded-sm shadow-sm transition-colors disabled:opacity-70 mt-2"
       >
-        {isLoading ? "Authenticating..." : "Login"}
+        {isLoading ? (
+          <>
+            <svg
+              className="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            Authenticating...
+          </>
+        ) : (
+          "Login"
+        )}
       </button>
     </form>
   );
