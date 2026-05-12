@@ -13,6 +13,7 @@ export default function SystemSettingsPage() {
     creditMultiplier: 2.0,
     maintenanceMode: false,
     allowRegistrations: true,
+    loanFormFee: 50000,
   });
 
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -23,7 +24,6 @@ export default function SystemSettingsPage() {
 
   const fetchSystemData = async () => {
     try {
-      // 🚀 FIX: Fetch both the settings AND the audit logs concurrently
       const [settingsRes, logsRes] = await Promise.all([
         apiClient.get("/system/settings"),
         apiClient.get("/auth/audit-logs"),
@@ -31,7 +31,6 @@ export default function SystemSettingsPage() {
 
       setSettings(settingsRes.data.settings);
 
-      // Filter logs to ONLY show setting modifications for this specific page
       const settingsLogs = logsRes.data.filter(
         (log: any) => log.action === "UPDATED_SETTINGS",
       );
@@ -50,7 +49,6 @@ export default function SystemSettingsPage() {
     try {
       await apiClient.put("/system/settings", settings);
       toast.success("Global algorithms and security parameters updated.");
-      // Refresh the logs to show the new entry immediately
       fetchSystemData();
     } catch (error) {
       toast.error("Failed to save configurations.");
@@ -91,9 +89,11 @@ export default function SystemSettingsPage() {
               <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
                 Core Financial Engine
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+              {/* 🚀 FIXED: Professional Grid Layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Standard Interest Rate (%)
                   </label>
                   <input
@@ -106,11 +106,12 @@ export default function SystemSettingsPage() {
                         interestRate: parseFloat(e.target.value),
                       })
                     }
-                    className="block w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-slate-500 dark:focus:border-slate-400 transition-colors"
+                    className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Borrowing Multiplier
                   </label>
                   <input
@@ -123,8 +124,37 @@ export default function SystemSettingsPage() {
                         creditMultiplier: parseFloat(e.target.value),
                       })
                     }
-                    className="block w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-slate-500 dark:focus:border-slate-400 transition-colors"
+                    className="block w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
                   />
+                </div>
+
+                <div className="sm:col-span-2 pt-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Loan Form Fee (₦)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 font-medium">
+                      ₦
+                    </span>
+                    <input
+                      type="number"
+                      step="50"
+                      value={settings.loanFormFee / 100}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          loanFormFee: Math.round(
+                            parseFloat(e.target.value) * 100,
+                          ),
+                        })
+                      }
+                      className="block w-full pl-9 pr-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                    This amount is automatically deducted from a cooperator's
+                    savings when they submit a loan application.
+                  </p>
                 </div>
               </div>
             </div>
@@ -179,9 +209,9 @@ export default function SystemSettingsPage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="w-full bg-[#6A5AE0] hover:bg-[#5b4bc4] text-white text-sm font-bold py-3 rounded-sm transition-colors disabled:opacity-70"
+              className="w-full bg-[#1b5e3a] hover:bg-[#124228] text-white text-sm font-bold py-3.5 rounded-sm shadow-sm transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
             >
-              {isSaving ? "Synchronizing..." : "Apply Global Policy"}
+              {isSaving ? "Synchronizing Settings..." : "Apply Global Policy"}
             </button>
           </form>
         </div>
@@ -222,7 +252,6 @@ export default function SystemSettingsPage() {
                 </div>
               ) : (
                 <div className="w-full space-y-4">
-                  {/* 🚀 FIX: Actually rendering the logs here! */}
                   {auditLogs.map((log) => (
                     <div
                       key={log._id}

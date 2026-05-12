@@ -1,24 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-// Edge-compatible function to quickly verify if a JWT is structurally valid and not expired
-function isTokenValid(token: string): boolean {
+// Securely verify the signature at the edge
+async function isTokenValid(token: string): Promise<boolean> {
   try {
-    const payloadBase64 = token.split(".")[1];
-    const decodedJson = JSON.parse(atob(payloadBase64));
+    const secretString =
+      process.env.JWT_SECRET || "your_super_secure_jwt_secret";
+    const secret = new TextEncoder().encode(secretString);
 
-    if (decodedJson.exp && decodedJson.exp * 1000 > Date.now()) {
-      return true;
-    }
-    return false;
-  } catch (e) {
+    await jwtVerify(token, secret);
+    return true;
+  } catch (e: any) {
+    // Log the exact reason the token was rejected to the terminal
+    console.error("🔒 JWT Verification Failed in Middleware:", e.message);
     return false;
   }
 }
 
-export default function proxy(request: NextRequest) {
-  // 🚀 THE FIX: Prevent Middleware from intercepting and breaking Next.js Server Actions
-  // If this is a Server Action (like our syncAuthCookie), let it pass through uninterrupted.
+export default async function proxy(request: NextRequest) {
+  // Let Next.js Server Actions (like syncAuthCookie) pass through uninterrupted
   if (request.headers.has("next-action")) {
     return NextResponse.next();
   }
@@ -28,8 +29,10 @@ export default function proxy(request: NextRequest) {
 
   // Protect private routes
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
-    if (!token || !isTokenValid(token)) {
-      // Clear the invalid cookie and redirect
+    const isValid = token ? await isTokenValid(token) : false;
+
+    if (!token || !isValid) {
+      console.log(`🚫 Rejecting access to ${pathname}. Redirecting to /login.`);
       const response = NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete("coop_token");
       return response;
@@ -38,7 +41,8 @@ export default function proxy(request: NextRequest) {
 
   // Redirect authenticated users away from public auth pages
   if (pathname === "/login" || pathname === "/register") {
-    if (token && isTokenValid(token)) {
+    const isValid = token ? await isTokenValid(token) : false;
+    if (token && isValid) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

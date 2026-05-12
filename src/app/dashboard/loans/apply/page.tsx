@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
-
-// 🚀 FIX: Import Redux to trigger an instant background refresh
 import { useDispatch } from "react-redux";
 import { fetchFinancialData } from "@/store/financeSlice";
 import type { AppDispatch } from "@/store";
@@ -24,6 +22,7 @@ export default function ApplyForLoanPage() {
 
   const [creditLimit, setCreditLimit] = useState(0);
   const [interestRate, setInterestRate] = useState(10);
+  const [formFee, setFormFee] = useState(50000);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +37,7 @@ export default function ApplyForLoanPage() {
 
         setCreditLimit(accountRes.data.availableCreditLimit);
         setInterestRate(settingsRes.data.settings?.interestRate ?? 10);
+        setFormFee(settingsRes.data.settings?.loanFormFee ?? 50000);
       } catch (error) {
         console.error("Failed to fetch data", error);
         toast.error("Could not verify your application limits.");
@@ -94,7 +94,6 @@ export default function ApplyForLoanPage() {
 
       toast.success("Loan application submitted successfully!");
 
-      // 🚀 FIX: Await the global state update before routing
       await dispatch(fetchFinancialData());
 
       router.push("/dashboard/loans");
@@ -224,10 +223,34 @@ export default function ApplyForLoanPage() {
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                 2. Nominate Guarantors
               </label>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
                 Enter the ASCON File Numbers of two cooperative members to
                 guarantee this facility.
               </p>
+
+              <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-sm p-3 mb-4 text-xs text-amber-800 dark:text-amber-400 flex gap-2 items-start transition-colors">
+                <svg
+                  className="w-4 h-4 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="text-justify">
+                  <strong className="font-bold">System Rule:</strong> Nominated
+                  guarantors must have sufficient unencumbered savings to cover
+                  your requested amount. If a guarantor is already backing other
+                  active loans that max out their savings capacity, the system
+                  will reject your nomination.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1.5">
@@ -315,7 +338,7 @@ export default function ApplyForLoanPage() {
               )}
             </div>
 
-            <div className="pt-4 flex items-center gap-4">
+            <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3">
               <button
                 type="submit"
                 disabled={
@@ -323,12 +346,13 @@ export default function ApplyForLoanPage() {
                   isOverLimit ||
                   !amountRequested ||
                   !guarantor1 ||
-                  !guarantor2
+                  !guarantor2 ||
+                  creditLimit < formFee
                 }
-                className="bg-[#1b5e3a] hover:bg-[#124228] text-white px-8 py-3 rounded-sm font-bold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="bg-[#1b5e3a] hover:bg-[#124228] text-white w-full sm:w-auto px-5 py-2.5 text-sm rounded-sm font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
               >
                 {isSubmitting ? (
-                  "Processing Application..."
+                  "Processing..."
                 ) : (
                   <>
                     Submit Application
@@ -342,12 +366,17 @@ export default function ApplyForLoanPage() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        d="M14 5l7 7m0 0l7-7m7-7H3"
                       />
                     </svg>
                   </>
                 )}
               </button>
+              <div className="text-[11px] leading-snug font-medium text-amber-700 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 rounded-sm border border-amber-200 dark:border-amber-800/50 w-full text-center sm:text-left">
+                A non-refundable fee of{" "}
+                <strong>₦{formatNaira(formFee)}</strong> will be automatically
+                deducted.
+              </div>
             </div>
           </form>
         </div>
@@ -429,8 +458,8 @@ export default function ApplyForLoanPage() {
             </div>
           </div>
 
-          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-sm p-5 text-amber-800 dark:text-amber-400 text-xs transition-colors">
-            <h4 className="font-bold flex items-center gap-1.5 mb-2">
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-sm p-5 text-amber-800 dark:text-amber-400 text-xs transition-colors text-justify">
+            <h4 className="font-bold flex items-center gap-1.5 mb-2 text-left">
               <svg
                 className="w-4 h-4"
                 fill="none"
