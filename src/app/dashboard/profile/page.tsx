@@ -21,7 +21,11 @@ export default function ProfileBioDataPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
+
+  // New States for local preview and file handling
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("coop_user");
@@ -44,65 +48,92 @@ export default function ProfileBioDataPage() {
     return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}`;
   };
 
-  const currentMonthString = new Date().toLocaleString("en-GB", {
-    month: "long",
-    year: "numeric",
-  });
-  const currentMonthSavings = transactions
-    .filter(
-      (txn: any) =>
-        txn.type === "CREDIT" && txn.effectiveMonth === currentMonthString,
-    )
-    .reduce((sum: number, txn: any) => sum + txn.amount, 0);
+const currentMonthString = new Date().toLocaleString("en-GB", {
+  month: "long",
+  year: "numeric",
+});
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+// 🚀 FIX: Added the dividend exclusion filter so regular cooperators see the correct value
+const currentMonthSavings = transactions
+  .filter(
+    (txn: any) =>
+      txn.type === "CREDIT" &&
+      txn.effectiveMonth === currentMonthString &&
+      !txn.description?.toLowerCase().includes("dividend"), // <-- Add this line
+  )
+  .reduce((sum: number, txn: any) => sum + txn.amount, 0);
+
+  // Replaced handleImageUpload with a local preview handler
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024)
+    if (file.size > 5 * 1024 * 1024) {
       return toast.error("Image is too large. Must be less than 5MB.");
-
-    setIsUploadingImage(true);
-    try {
-      // 1. Get the secure signature from our Node backend
-      const { data: sigData } = await apiClient.get("/upload/signature");
-
-      // 2. Prepare payload for Cloudinary
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("api_key", sigData.apiKey);
-      formData.append("timestamp", sigData.timestamp);
-      formData.append("signature", sigData.signature);
-      formData.append("folder", "ascon_coop_avatars");
-
-      // 3. Upload DIRECTLY to Cloudinary (Bypassing our backend memory)
-      const cloudRes = await axios.post(
-        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
-        formData,
-      );
-
-      setEditForm({ ...editForm, avatarUrl: cloudRes.data.secure_url });
-      toast.success("Image uploaded! Don't forget to save your changes.");
-    } catch (error: any) {
-      toast.error("Failed to upload image. Please try again.");
-    } finally {
-      setIsUploadingImage(false);
     }
+
+    // Store the actual file to upload later
+    setSelectedFile(file);
+    // Create a temporary local URL to show the user immediately
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+
     try {
-      const res = await apiClient.put("/auth/profile", editForm);
+      let finalAvatarUrl = editForm.avatarUrl;
+
+      // Only upload to Cloudinary if a new file was actually selected
+      if (selectedFile) {
+        setIsUploadingImage(true);
+        // 1. Get the secure signature from our Node backend
+        const { data: sigData } = await apiClient.get("/upload/signature");
+
+        // 2. Prepare payload for Cloudinary
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("api_key", sigData.apiKey);
+        formData.append("timestamp", sigData.timestamp);
+        formData.append("signature", sigData.signature);
+        formData.append("folder", "ascon_coop_avatars");
+
+        // 3. Upload DIRECTLY to Cloudinary
+        const cloudRes = await axios.post(
+          `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+          formData,
+        );
+        finalAvatarUrl = cloudRes.data.secure_url;
+        setIsUploadingImage(false);
+      }
+
+      // Submit the profile update with the final URL
+      const res = await apiClient.put("/auth/profile", {
+        ...editForm,
+        avatarUrl: finalAvatarUrl,
+      });
+
       localStorage.setItem("coop_user", JSON.stringify(res.data));
       setUser(res.data);
       toast.success("Bio Data updated successfully!");
+
+      // Clean up states after successful save
       setIsEditModalOpen(false);
+      setSelectedFile(null);
+      setPreviewUrl(null);
     } catch (error: any) {
+      setIsUploadingImage(false);
       toast.error(error.response?.data?.message || "Failed to update profile.");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setEditForm(user); // Reset form to current user data
   };
 
   if (status === "loading" || status === "idle" || !user) {
@@ -243,7 +274,6 @@ export default function ProfileBioDataPage() {
         <div className="lg:col-span-8 flex flex-col gap-6">
           <div className="bg-white dark:bg-[#1B1B25] rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-0 border border-slate-200 dark:border-slate-800 shadow-sm divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 transition-colors">
             <div className="p-6 flex flex-col items-center justify-center text-center">
-              {/* First Block - Was "Total Savings" */}
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                 Available Balance
               </p>
@@ -257,7 +287,6 @@ export default function ProfileBioDataPage() {
               </div>
             </div>
             <div className="p-6 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-[#12121A]/50 transition-colors">
-              {/* Second Block - Was "Saved This Month" */}
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                 Deposits This Month
               </p>
@@ -402,7 +431,7 @@ export default function ProfileBioDataPage() {
                 Update Bio Data
               </h3>
               <button
-                onClick={() => setIsEditModalOpen(false)}
+                onClick={closeEditModal}
                 className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
               >
                 <svg
@@ -428,9 +457,9 @@ export default function ProfileBioDataPage() {
               <div className="flex flex-col items-center justify-center mb-6">
                 <label className="relative cursor-pointer group">
                   <div className="relative w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-700 overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-3xl font-bold text-slate-500 dark:text-slate-400 shadow-sm">
-                    {editForm.avatarUrl || user?.avatarUrl ? (
+                    {previewUrl || editForm.avatarUrl || user?.avatarUrl ? (
                       <img
-                        src={editForm.avatarUrl || user.avatarUrl}
+                        src={previewUrl || editForm.avatarUrl || user.avatarUrl}
                         alt="Avatar"
                         className="w-full h-full object-cover"
                       />
@@ -459,7 +488,7 @@ export default function ProfileBioDataPage() {
                         />
                       </svg>
                       <span className="text-[10px] text-white font-bold">
-                        Upload
+                        Select
                       </span>
                     </div>
                   </div>
@@ -484,14 +513,14 @@ export default function ProfileBioDataPage() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={handleImageUpload}
-                    disabled={isUploadingImage}
+                    onChange={handleFileSelect}
+                    disabled={isUploadingImage || isSaving}
                   />
                 </label>
 
-                {isUploadingImage ? (
-                  <p className="text-xs text-[#1b5e3a] dark:text-emerald-400 font-bold mt-3 animate-pulse">
-                    Uploading image securely...
+                {previewUrl ? (
+                  <p className="text-xs text-[#1b5e3a] dark:text-emerald-400 font-bold mt-3">
+                    Photo selected. Don't forget to save.
                   </p>
                 ) : (
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-3 uppercase tracking-wider font-semibold">
@@ -629,7 +658,7 @@ export default function ProfileBioDataPage() {
               <div className="pt-6 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setIsEditModalOpen(false)}
+                  onClick={closeEditModal}
                   className="px-5 py-2.5 bg-white dark:bg-[#1B1B25] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus:outline-none shadow-sm"
                 >
                   Cancel
@@ -639,7 +668,7 @@ export default function ProfileBioDataPage() {
                   disabled={isSaving || isUploadingImage}
                   className="px-6 py-2.5 bg-[#1b5e3a] text-white text-sm font-bold rounded-sm hover:bg-[#124228] shadow-md transition-all disabled:opacity-70 focus:outline-none flex items-center gap-2"
                 >
-                  {isSaving ? "Saving..." : "Save Changes"}
+                  {isSaving || isUploadingImage ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
