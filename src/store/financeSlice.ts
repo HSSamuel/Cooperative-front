@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/lib/axios";
 
-// 🚀 FIX: Define the explicit shape of the state so TypeScript knows cooperatorId exists
 interface Cooperator {
   dateJoined?: string;
   createdAt?: string;
@@ -10,6 +9,7 @@ interface Cooperator {
 
 interface AccountState {
   totalSavings: number;
+  totalDividends: number; // 🚀 ADDED: Now tracking dividends globally
   availableCreditLimit: number;
   customMonthlySavings: number;
   cooperatorId?: Cooperator;
@@ -26,6 +26,7 @@ interface FinanceState {
 const initialState: FinanceState = {
   account: {
     totalSavings: 0,
+    totalDividends: 0,
     availableCreditLimit: 0,
     customMonthlySavings: 0,
   },
@@ -43,7 +44,7 @@ export const fetchFinancialData = createAsyncThunk(
       const [accountRes, loansRes, txnRes] = await Promise.all([
         apiClient.get("/account/my-account"),
         apiClient.get("/loans/my-loans"),
-        apiClient.get("/account/transactions?limit=50"), // Added limit
+        apiClient.get("/account/transactions?limit=50"),
       ]);
 
       return {
@@ -63,10 +64,10 @@ const financeSlice = createSlice({
   name: "finance",
   initialState,
   reducers: {
-    // Allows us to clear data on logout
     clearFinanceData: (state) => {
       state.account = {
         totalSavings: 0,
+        totalDividends: 0,
         availableCreditLimit: 0,
         customMonthlySavings: 0,
       };

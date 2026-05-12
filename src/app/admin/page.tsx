@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 export default function AdminOverviewPage() {
   const [loans, setLoans] = useState<any[]>([]);
@@ -139,7 +140,7 @@ export default function AdminOverviewPage() {
           </div>
         </div>
       ),
-      { duration: Infinity, id: `confirm-review-${loanId}` }, // Infinity prevents the toast from auto-closing
+      { duration: Infinity, id: `confirm-review-${loanId}` },
     );
   };
 
@@ -283,7 +284,7 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex justify-between items-center transition-colors">
           <div>
             <p className="text-xs font-bold text-[#F39C12] uppercase tracking-wider mb-1">
@@ -297,6 +298,7 @@ export default function AdminOverviewPage() {
             </p>
           </div>
         </div>
+
         <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-center transition-colors">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -312,6 +314,51 @@ export default function AdminOverviewPage() {
           >
             Download Payroll CSV
           </button>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-sm p-6 shadow-sm border border-purple-700 flex flex-col justify-center transition-colors text-white">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-bold text-purple-200 uppercase tracking-wider">
+              Dividend Management
+            </p>
+            <svg
+              className="w-5 h-5 text-purple-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold mb-1">Targeted Payouts Active</h2>
+          <p className="text-xs text-purple-200 mb-4">
+            Dividends are now distributed individually. Use the Member Directory
+            to credit specific accounts.
+          </p>
+          <Link
+            href="/admin/members"
+            className="w-full bg-white/20 hover:bg-white/30 text-white font-bold py-2.5 rounded-sm transition-colors text-sm text-center flex items-center justify-center gap-2"
+          >
+            Go to Member Directory
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
+              />
+            </svg>
+          </Link>
         </div>
       </div>
 
@@ -376,30 +423,44 @@ export default function AdminOverviewPage() {
                     </td>
                   </tr>
                 ) : (
-                  auditLogs.map((log) => (
-                    <tr
-                      key={log._id}
-                      className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
-                    >
-                      <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">
-                        {log.adminId?.firstName} {log.adminId?.lastName} <br />
-                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
-                          {log.adminId?.fileNumber}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 text-[10px] rounded-sm uppercase">
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
-                        {log.description}
-                      </td>
-                    </tr>
-                  ))
+                  auditLogs.map((log) => {
+                    const dateObj = new Date(log.createdAt);
+                    return (
+                      <tr
+                        key={log._id}
+                        className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
+                      >
+                        {/* 🚀 FIX: Formatting to explicitly show May/10/2026 */}
+                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs">
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {`${dateObj.toLocaleString("en-US", { month: "short" })}/${dateObj.getDate().toString().padStart(2, "0")}/${dateObj.getFullYear()}`}
+                          </span>
+                          <br />
+                          <span className="text-[10px]">
+                            {dateObj.toLocaleTimeString("en-US", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">
+                          {log.adminId?.firstName} {log.adminId?.lastName}{" "}
+                          <br />
+                          <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+                            {log.adminId?.fileNumber}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 text-[10px] rounded-sm uppercase tracking-wider">
+                            {log.action.replace("_", " ")}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                          {log.description}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -120,7 +120,7 @@ export default function RegisterPage() {
                 className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5"
               >
                 Other Name{" "}
-                <span className="text-slate-400 dark:text-slate-500 font-normal">
+                <span className="text-slate-400 dark:text-slate-400 font-normal">
                   (Optional)
                 </span>
               </label>

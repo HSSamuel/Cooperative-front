@@ -123,7 +123,7 @@ export default function HRReportsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white dark:bg-[#1B1B25] rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1">
             Total Disbursed (Active)
           </p>
           <h3 className="text-2xl font-extrabold text-slate-800 dark:text-slate-200 tabular-nums">
@@ -240,7 +240,7 @@ export default function HRReportsPage() {
             <div className="overflow-x-auto flex-1">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white dark:bg-[#1B1B25] text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                  <tr className="bg-white dark:bg-[#1B1B25] text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 transition-colors">
                     <th className="px-6 py-3 font-bold">Cooperator</th>
                     <th className="px-6 py-3 font-bold">Outstanding Balance</th>
                     <th className="px-6 py-3 font-bold">Guarantors</th>
@@ -268,7 +268,7 @@ export default function HRReportsPage() {
                         <p className="text-slate-600 dark:text-slate-300 font-bold text-sm">
                           Excellent Portfolio Health
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        <p className="text-xs text-slate-400 dark:text-slate-400 mt-1">
                           No loans are currently flagged for high risk.
                         </p>
                       </td>

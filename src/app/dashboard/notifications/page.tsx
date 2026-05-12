@@ -302,7 +302,7 @@ export default function NotificationsPage() {
                     >
                       {notif.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-400 whitespace-nowrap">
                       <span>{notif.date}</span>
                       <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full"></span>
                       <span>{notif.time}</span>
@@ -324,13 +324,13 @@ export default function NotificationsPage() {
                       Mark Read
                     </button>
                   ) : (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500 px-3 py-1.5">
+                    <span className="text-xs font-medium text-slate-400  px-3 py-1.5">
                       Read
                     </span>
                   )}
                   <button
                     onClick={() => handleDelete(notif.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400  hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     title="Delete permanently"
                   >
                     <svg

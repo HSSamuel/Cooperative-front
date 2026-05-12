@@ -163,7 +163,7 @@ export default function LoansPage() {
               Amount Borrowed
             </p>
             <div className="flex items-baseline gap-1 relative z-10">
-              <span className="text-xl font-bold text-slate-400 dark:text-slate-500">
+              <span className="text-xl font-bold text-slate-500 dark:text-slate-400">
                 ₦
               </span>
               <h3 className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight truncate">
@@ -186,7 +186,7 @@ export default function LoansPage() {
               Total Repaid
             </p>
             <div className="flex items-baseline gap-1 relative z-10">
-              <span className="text-xl font-bold text-slate-400 dark:text-slate-500">
+              <span className="text-xl font-bold text-slate-500 dark:text-slate-400">
                 ₦
               </span>
               <h3 className="text-3xl font-extrabold text-[#1b5e3a] dark:text-emerald-400 tracking-tight truncate">
@@ -209,7 +209,7 @@ export default function LoansPage() {
               Outstanding Debt
             </p>
             <div className="flex items-baseline gap-1 relative z-10">
-              <span className="text-xl font-bold text-red-400 dark:text-red-500">
+              <span className="text-xl font-bold text-red-500 dark:text-red-400">
                 ₦
               </span>
               <h3 className="text-3xl font-extrabold text-red-600 dark:text-red-400 tracking-tight truncate">
@@ -261,7 +261,6 @@ export default function LoansPage() {
               const endDate = new Date(loan.createdAt);
               endDate.setMonth(endDate.getMonth() + loanTenure);
 
-              // 🚀 FIX: Highly readable "May 10, 2026" date options
               const dateOptions: Intl.DateTimeFormatOptions = {
                 month: "long",
                 day: "numeric",
@@ -317,7 +316,6 @@ export default function LoansPage() {
                       </h3>
                       <p className="text-emerald-100/70 text-xs sm:text-sm font-medium mt-1">
                         Disbursed on{" "}
-                        {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
                         {startDate.toLocaleDateString("en-US", dateOptions)}
                       </p>
                     </div>
@@ -459,7 +457,6 @@ export default function LoansPage() {
                           Start Date
                         </p>
                         <p className="text-xs sm:text-sm md:text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
-                          {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
                           {startDate.toLocaleDateString("en-US", dateOptions)}
                         </p>
                       </div>
@@ -486,7 +483,6 @@ export default function LoansPage() {
                           End Date
                         </p>
                         <p className="text-xs sm:text-sm md:text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
-                          {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
                           {endDate.toLocaleDateString("en-US", dateOptions)}
                         </p>
                       </div>
@@ -537,7 +533,7 @@ export default function LoansPage() {
 
                     <div className="flex justify-between items-center text-sm">
                       <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-0.5">
+                        <p className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-0.5">
                           Repaid So Far
                         </p>
                         <p className="font-black text-[#1b5e3a] dark:text-emerald-400 text-base sm:text-lg">
@@ -545,7 +541,7 @@ export default function LoansPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-0.5">
+                        <p className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-0.5">
                           Remaining Balance
                         </p>
                         <p className="font-black text-red-500 dark:text-red-400 text-base sm:text-lg">
@@ -661,7 +657,7 @@ export default function LoansPage() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                               No Guarantors Required
                             </span>
                           )}
@@ -675,8 +671,7 @@ export default function LoansPage() {
                         <td className="py-3 px-4 text-red-500 dark:text-red-400 font-bold text-right border border-slate-200 dark:border-slate-800">
                           {balance > 0 ? `₦${formatNaira(balance)}` : "₦0.00"}
                         </td>
-                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
-                          {/* 🚀 FIX: Updated to en-US for "May 10, 2026" formatting */}
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
                           {new Date(loan.createdAt).toLocaleDateString(
                             "en-US",
                             {
@@ -686,7 +681,6 @@ export default function LoansPage() {
                             },
                           )}
                           <br />
-                          {/* 🚀 FIX: Cleaned up the time format */}
                           {new Date(loan.createdAt).toLocaleTimeString(
                             "en-US",
                             {

@@ -216,7 +216,7 @@ export default function SystemSettingsPage() {
                   <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                     No Activity Found
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-[200px]">
+                  <p className="text-xs text-slate-400 dark:text-slate-400 mt-1 max-w-[200px]">
                     Configuration overrides will be permanently logged here.
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export default function SystemSettingsPage() {
                             {log.adminId?.fileNumber}
                           </p>
                         </div>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap bg-white dark:bg-slate-800 px-2 py-1 rounded shadow-sm">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-slate-800 px-2 py-1 rounded shadow-sm">
                           {new Date(log.createdAt).toLocaleDateString()}
                         </span>
                       </div>

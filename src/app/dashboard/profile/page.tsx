@@ -147,7 +147,7 @@ export default function ProfileBioDataPage() {
                 <rect width="100%" height="100%" fill="url(#grid)" />
               </svg>
             </div>
-            {/* ... inside the Profile Card ... */}
+
             <div className="relative z-10 w-28 h-28 rounded-full border-4 border-white/20 overflow-hidden mb-4 bg-slate-700 flex items-center justify-center text-4xl font-bold shadow-lg">
               {user.avatarUrl ? (
                 <img
@@ -160,7 +160,6 @@ export default function ProfileBioDataPage() {
               )}
             </div>
 
-            {/* 🚀 FIX: Dynamically render Other Name if it exists */}
             <h2 className="relative z-10 text-2xl font-bold tracking-wide mb-1 text-center">
               {user.firstName} {user.otherName ? `${user.otherName} ` : ""}
               {user.lastName}
@@ -244,8 +243,9 @@ export default function ProfileBioDataPage() {
         <div className="lg:col-span-8 flex flex-col gap-6">
           <div className="bg-white dark:bg-[#1B1B25] rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-0 border border-slate-200 dark:border-slate-800 shadow-sm divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 transition-colors">
             <div className="p-6 flex flex-col items-center justify-center text-center">
+              {/* First Block - Was "Total Savings" */}
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Total Savings
+                Available Balance
               </p>
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
@@ -257,8 +257,9 @@ export default function ProfileBioDataPage() {
               </div>
             </div>
             <div className="p-6 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-[#12121A]/50 transition-colors">
+              {/* Second Block - Was "Saved This Month" */}
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Saved This Month
+                Deposits This Month
               </p>
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-sm font-bold text-slate-400 dark:text-slate-500">

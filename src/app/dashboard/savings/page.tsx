@@ -1,23 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchFinancialData } from "@/store/financeSlice";
-import type { AppDispatch } from "@/store";
+import type { AppDispatch, RootState } from "@/store";
 
 export default function SavingsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [account, setAccount] = useState({
-    totalSavings: 0,
-    availableCreditLimit: 0,
-    customMonthlySavings: 0,
-  });
 
-  const [outstandingLoanBalance, setOutstandingLoanBalance] = useState(0);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { account, loans, transactions, status } = useSelector(
+    (state: RootState) => state.finance,
+  );
+
   const [user, setUser] = useState<any>({
     firstName: "Member",
     lastName: "",
@@ -30,46 +26,19 @@ export default function SavingsPage() {
   const [depositAmount, setDepositAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchAccountData = useCallback(async () => {
-    try {
-      const [accountRes, loansRes, txnRes] = await Promise.all([
-        apiClient.get("/account/my-account"),
-        apiClient.get("/loans/my-loans"),
-        apiClient.get("/account/transactions"),
-      ]);
-
-      setAccount(accountRes.data);
-
-      const activeLoans = loansRes.data.filter(
-        (l: any) => l.status === "APPROVED",
-      );
-      const totalOutstanding = activeLoans.reduce((sum: number, loan: any) => {
-        const targetRepayment = loan.amountDue || loan.amountRequested;
-        const amountRepaid = loan.amountRepaid || 0;
-        return sum + (targetRepayment - amountRepaid);
-      }, 0);
-      setOutstandingLoanBalance(totalOutstanding);
-      setTransactions(txnRes.data);
-    } catch (error) {
-      console.error("Error fetching account data", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     const storedUser = localStorage.getItem("coop_user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    fetchAccountData();
-  }, [fetchAccountData]);
+    dispatch(fetchFinancialData());
+  }, [dispatch]);
 
-  const formatNaira = (amount: number) => {
+  const formatNaira = (koboAmount: number) => {
     return new Intl.NumberFormat("en-NG", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amount);
+    }).format(koboAmount / 100);
   };
 
   const handleDeposit = async (e: React.FormEvent) => {
@@ -90,7 +59,8 @@ export default function SavingsPage() {
       toast.success("Deposit successful!");
       setIsAddModalOpen(false);
       setDepositAmount("");
-      await fetchAccountData();
+
+      // 🚀 Instantly sync Redux state
       dispatch(fetchFinancialData());
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Deposit failed.");
@@ -103,14 +73,41 @@ export default function SavingsPage() {
     month: "long",
     year: "numeric",
   });
+
   const currentMonthSavings = transactions
     .filter(
       (txn) =>
-        txn.type === "CREDIT" && txn.effectiveMonth === currentMonthString,
+        txn.type === "CREDIT" &&
+        txn.effectiveMonth === currentMonthString &&
+        !txn.description?.toLowerCase().includes("dividend"),
     )
     .reduce((sum, txn) => sum + txn.amount, 0);
 
-  if (isLoading) {
+  const activeLoans = loans.filter((l: any) => l.status === "APPROVED");
+  const outstandingLoanBalance = activeLoans.reduce(
+    (sum: number, loan: any) => {
+      const targetRepayment = loan.amountDue || loan.amountRequested;
+      const amountRepaid = loan.amountRepaid || 0;
+      return sum + (targetRepayment - amountRepaid);
+    },
+    0,
+  );
+
+  const totalDebits = transactions
+    .filter((txn) => txn.type === "DEBIT")
+    .reduce((sum, txn) => sum + txn.amount, 0);
+
+  const totalDividends =
+    account.totalDividends ||
+    transactions
+      .filter(
+        (txn) =>
+          txn.type === "CREDIT" &&
+          txn.description?.toLowerCase().includes("dividend"),
+      )
+      .reduce((sum, txn) => sum + txn.amount, 0);
+
+  if (status === "loading" || status === "idle") {
     return (
       <div className="animate-pulse flex flex-col gap-6 h-[800px] w-full">
         <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-sm w-full"></div>
@@ -122,7 +119,6 @@ export default function SavingsPage() {
   return (
     <div className="animate-fade-in-up pb-10 relative">
       <div className="flex flex-col gap-6 w-full">
-        {/* Top 3 Cards Box */}
         <div className="bg-[#1b5e3a] p-6 rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-6 shadow-md border border-[#124228]">
           <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm transition-colors">
             <div className="flex items-start justify-center gap-1 mb-2">
@@ -130,11 +126,12 @@ export default function SavingsPage() {
                 ₦
               </span>
               <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 tracking-tight">
-                {formatNaira(account.totalSavings / 100)}
+                {formatNaira(account.totalSavings)}
               </h3>
             </div>
+            {/* Second Card - Was "Current Monthly Savings" */}
             <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-              Account Balance
+              Available Balance
             </p>
           </div>
 
@@ -144,11 +141,11 @@ export default function SavingsPage() {
                 ₦
               </span>
               <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 tracking-tight">
-                {formatNaira(currentMonthSavings / 100)}
+                {formatNaira(currentMonthSavings)}
               </h3>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-              Current Monthly Savings
+              Deposits This Month
             </p>
           </div>
 
@@ -156,7 +153,7 @@ export default function SavingsPage() {
             <div className="flex items-start justify-center gap-1 mb-2">
               <span className="text-xl font-medium text-red-400 mt-1">₦</span>
               <h3 className="text-3xl font-bold text-red-500 tracking-tight">
-                {formatNaira(outstandingLoanBalance / 100)}
+                {formatNaira(outstandingLoanBalance)}
               </h3>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 italic">
@@ -165,9 +162,7 @@ export default function SavingsPage() {
           </div>
         </div>
 
-        {/* Transaction Ledger Table */}
         <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 w-full transition-colors">
-          {/* 🚀 FIX: Transaction Ledger Header with CTA properly placed */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4 gap-4">
             <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
               Transaction Ledger
@@ -197,7 +192,6 @@ export default function SavingsPage() {
             <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
               <thead className="bg-slate-50 dark:bg-[#12121A]/50">
                 <tr>
-                  {/* 🚀 FIX: Proper semantic header for the Status column */}
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-center w-16 border border-slate-200 dark:border-slate-800">
                     Status
                   </th>
@@ -207,17 +201,18 @@ export default function SavingsPage() {
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Description
                   </th>
-                  {/* Change text-center to text-right here 👇 */}
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
                     Debit
                   </th>
-                  {/* Change text-center to text-right here 👇 */}
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
                     Credit
                   </th>
-                  {/* Change text-center to text-right here 👇 */}
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
                     Dividends
+                  </th>
+                  {/* 🚀 NEW: Total Balance Column */}
+                  <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm text-right border border-slate-200 dark:border-slate-800">
+                    Total Balance
                   </th>
                   <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-sm border border-slate-200 dark:border-slate-800">
                     Date
@@ -228,74 +223,99 @@ export default function SavingsPage() {
                 {transactions.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="py-8 text-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
                     >
                       No transactions recorded yet.
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((txn) => (
-                    <tr
-                      key={txn._id}
-                      className="hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
-                    >
-                      <td className="py-3 px-4 border border-slate-200 dark:border-slate-800 text-center">
-                        {/* 🚀 FIX: Cleaner, professional status badge */}
-                        <div className="bg-emerald-100 dark:bg-emerald-900/30 text-[#1b5e3a] dark:text-emerald-400 p-1.5 rounded-full inline-flex items-center justify-center shadow-sm">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                  transactions.map((txn) => {
+                    const isDividend =
+                      txn.type === "CREDIT" &&
+                      txn.description?.toLowerCase().includes("dividend");
+                    const isCredit = txn.type === "CREDIT" && !isDividend;
+                    const isDebit = txn.type === "DEBIT";
+
+                    return (
+                      <tr
+                        key={txn._id}
+                        className="hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
+                      >
+                        <td className="py-3 px-4 border border-slate-200 dark:border-slate-800 text-center">
+                          <div
+                            className={`w-8 h-8 mx-auto rounded-full inline-flex items-center justify-center shadow-sm ${txn.type === "CREDIT" ? "bg-emerald-100 dark:bg-emerald-900/30 text-[#1b5e3a] dark:text-emerald-400" : "bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400"}`}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2.5}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium border border-slate-200 dark:border-slate-800">
-                        {txn.effectiveMonth || "N/A"}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-                        {txn.description}
-                      </td>
-                      <td className="py-3 px-4 text-red-500 dark:text-red-400 text-right font-medium border border-slate-200 dark:border-slate-800">
-                        {txn.type === "DEBIT"
-                          ? formatNaira(txn.amount / 100)
-                          : ""}
-                      </td>
-                      <td className="py-3 px-4 text-[#1b5e3a] dark:text-emerald-400 text-right font-bold border border-slate-200 dark:border-slate-800">
-                        {txn.type === "CREDIT"
-                          ? formatNaira(txn.amount / 100)
-                          : ""}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-right border border-slate-200 dark:border-slate-800"></td>
-                      <td className="py-3 px-4 text-slate-500 dark:text-slate-500 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
-                        {/* 🚀 FIX: Explicit, readable date formatting */}
-                        {new Date(txn.createdAt).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                        <br />
-                        {new Date(txn.createdAt).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                    </tr>
-                  ))
+                            {txn.type === "CREDIT" ? (
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2.5}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2.5}
+                                  d="M17 13l-5 5m0 0l-5-5m5 5V6"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium border border-slate-200 dark:border-slate-800">
+                          {txn.effectiveMonth || "N/A"}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                          {txn.description}
+                        </td>
+                        <td className="py-3 px-4 text-red-500 dark:text-red-400 text-right font-medium border border-slate-200 dark:border-slate-800">
+                          {isDebit ? formatNaira(txn.amount) : ""}
+                        </td>
+                        <td className="py-3 px-4 text-[#1b5e3a] dark:text-emerald-400 text-right font-bold border border-slate-200 dark:border-slate-800">
+                          {isCredit ? formatNaira(txn.amount) : ""}
+                        </td>
+                        <td className="py-3 px-4 text-purple-600 dark:text-purple-400 text-right font-bold border border-slate-200 dark:border-slate-800">
+                          {isDividend ? formatNaira(txn.amount) : ""}
+                        </td>
+                        {/* 🚀 NEW: Data for Total Balance */}
+                        <td className="py-3 px-4 text-slate-800 dark:text-slate-200 text-right font-black border border-slate-200 dark:border-slate-800">
+                          ₦{formatNaira(txn.balanceAfter || 0)}
+                        </td>
+                        <td className="py-3 px-4 text-slate-500 dark:text-slate-500 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
+                          {new Date(txn.createdAt).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                          <br />
+                          {new Date(txn.createdAt).toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Bottom 3 Summary Boxes */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
             <div className="bg-[#f8f9fe] dark:bg-[#12121A]/50 p-5 rounded-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-1">
@@ -315,17 +335,18 @@ export default function SavingsPage() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                  ₦{formatNaira(account.totalSavings / 100)}
+                  ₦{formatNaira(account.totalSavings)}
                 </h3>
               </div>
+              {/* First Bottom Box - Was "Total savings" */}
               <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">
-                Total saving
+                Available balance
               </p>
             </div>
 
             <div className="bg-[#f8f9fe] dark:bg-[#12121A]/50 p-5 rounded-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-sm text-orange-500 dark:text-orange-400">
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-sm text-purple-600 dark:text-purple-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -336,12 +357,12 @@ export default function SavingsPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                      d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
                     />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                  ₦0.00
+                  ₦{formatNaira(totalDividends)}
                 </h3>
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">
@@ -367,7 +388,7 @@ export default function SavingsPage() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                  ₦0.00
+                  ₦{formatNaira(totalDebits)}
                 </h3>
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">

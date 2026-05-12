@@ -17,7 +17,10 @@ export default function MemberDirectoryPage() {
 
   // Financial States
   const [memberAccount, setMemberAccount] = useState<any>(null);
+  const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
   const [isAccountLoading, setIsAccountLoading] = useState(false);
+  const [isLedgerLoading, setIsLedgerLoading] = useState(false);
+
   const [adjustAmount, setAdjustAmount] = useState("");
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [customLimitAmount, setCustomLimitAmount] = useState("");
@@ -43,16 +46,17 @@ export default function MemberDirectoryPage() {
   useEffect(() => {
     if (selectedMember) {
       fetchMemberAccount(selectedMember._id);
+      fetchMemberLedger(selectedMember._id);
     }
   }, [selectedMember]);
 
   const fetchInitialData = async () => {
     try {
       const [membersRes, loansRes] = await Promise.all([
-        apiClient.get("/auth/all-members"),
+        apiClient.get("/auth/all-members?page=1&limit=50"),
         apiClient.get("/loans/all").catch(() => ({ data: [] })),
       ]);
-      setMembers(membersRes.data);
+      setMembers(membersRes.data.users || membersRes.data);
       setAllLoans(loansRes.data);
     } catch (error) {
       toast.error("Failed to load member directory.");
@@ -84,17 +88,24 @@ export default function MemberDirectoryPage() {
     }
   };
 
-  const handleAdminAdjustment = async (type: "CREDIT" | "DEBIT") => {
-    const amountInNaira = parseFloat(adjustAmount);
-    if (isNaN(amountInNaira) || amountInNaira <= 0)
-      return toast.error("Enter a valid amount.");
-    if (
-      !window.confirm(
-        `Are you sure you want to ${type.toLowerCase()} ₦${amountInNaira} to this account?`,
-      )
-    )
-      return;
+  const fetchMemberLedger = async (cooperatorId: string) => {
+    setIsLedgerLoading(true);
+    try {
+      const res = await apiClient.get(
+        `/account/user/${cooperatorId}/transactions`,
+      );
+      setMemberTransactions(res.data);
+    } catch (error) {
+      console.error("Ledger fetch failed:", error);
+    } finally {
+      setIsLedgerLoading(false);
+    }
+  };
 
+  const executeAdminAdjustment = async (
+    type: "CREDIT" | "DEBIT" | "DIVIDEND",
+    amountInNaira: number,
+  ) => {
     setIsAdjusting(true);
     try {
       const res = await apiClient.post("/account/admin-adjust", {
@@ -105,11 +116,144 @@ export default function MemberDirectoryPage() {
       toast.success(res.data.message);
       setMemberAccount(res.data.account);
       setAdjustAmount("");
+
+      fetchMemberLedger(selectedMember._id);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Adjustment failed.");
     } finally {
       setIsAdjusting(false);
     }
+  };
+
+  const handleAdminAdjustmentTrigger = (
+    type: "CREDIT" | "DEBIT" | "DIVIDEND",
+  ) => {
+    const amountInNaira = parseFloat(adjustAmount);
+    if (isNaN(amountInNaira) || amountInNaira <= 0)
+      return toast.error("Enter a valid amount.");
+
+    let themeColor = "";
+    let icon = null;
+    let title = "";
+    let actionText = "";
+    let btnClass = "";
+
+    if (type === "CREDIT") {
+      themeColor =
+        "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30";
+      title = "Confirm Credit";
+      actionText = "credit";
+      btnClass = "bg-[#20C997] hover:bg-[#1ab586]";
+      icon = (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={3}
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      );
+    } else if (type === "DEBIT") {
+      themeColor =
+        "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30";
+      title = "Confirm Debit";
+      actionText = "debit";
+      btnClass = "bg-red-500 hover:bg-red-600";
+      icon = (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={3}
+            d="M20 12H4"
+          />
+        </svg>
+      );
+    } else if (type === "DIVIDEND") {
+      themeColor =
+        "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30";
+      title = "Confirm Dividend";
+      actionText = "distribute a dividend of";
+      btnClass = "bg-purple-600 hover:bg-purple-700";
+      icon = (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+          />
+        </svg>
+      );
+    }
+
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? "animate-enter" : "animate-leave"
+          } max-w-sm w-full bg-white dark:bg-[#1B1B25] shadow-2xl rounded-2xl pointer-events-auto flex flex-col ring-1 ring-black/5 dark:ring-white/10 border border-slate-100 dark:border-slate-800 p-5`}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${themeColor}`}
+            >
+              {icon}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {title}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Are you sure you want to {actionText}{" "}
+                <span className="font-bold text-slate-700 dark:text-slate-200">
+                  ₦{amountInNaira.toLocaleString()}
+                </span>{" "}
+                for{" "}
+                <span className="font-semibold">
+                  {selectedMember?.firstName} {selectedMember?.lastName}
+                </span>
+                ?
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex gap-3 justify-end">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                executeAdminAdjustment(type, amountInNaira);
+              }}
+              className={`px-4 py-2 text-xs font-bold text-white rounded-lg transition-colors shadow-sm ${btnClass}`}
+            >
+              Yes, Confirm
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, id: `confirm-adjust-${selectedMember?._id}` },
+    );
   };
 
   const handleUpdateCreditLimit = async (e: React.FormEvent) => {
@@ -182,7 +326,6 @@ export default function MemberDirectoryPage() {
     }
   };
 
-  // 1. The actual API execution logic
   const executePasswordReset = async () => {
     try {
       await apiClient.post("/auth/forgot-password", {
@@ -194,7 +337,6 @@ export default function MemberDirectoryPage() {
     }
   };
 
-  // 2. The custom toast confirmation UI
   const handlePasswordResetTrigger = () => {
     toast.custom(
       (t) => (
@@ -256,6 +398,7 @@ export default function MemberDirectoryPage() {
     setSelectedMember(null);
     setActiveTab("IDENTITY");
     setMemberAccount(null);
+    setMemberTransactions([]);
   };
 
   const formatNaira = (koboAmount: number) => {
@@ -290,16 +433,25 @@ export default function MemberDirectoryPage() {
     );
   };
 
-  const filteredMembers = members.filter((member) => {
-    const term = searchQuery.toLowerCase();
-    return (
-      (member.firstName?.toLowerCase() || "").includes(term) ||
-      (member.lastName?.toLowerCase() || "").includes(term) ||
-      (member.fileNumber?.toLowerCase() || "").includes(term)
-    );
-  });
+ const filteredMembers = members
+   .filter((member) => {
+     const term = searchQuery.toLowerCase();
+     return (
+       (member.firstName?.toLowerCase() || "").includes(term) ||
+       (member.lastName?.toLowerCase() || "").includes(term) ||
+       (member.fileNumber?.toLowerCase() || "").includes(term)
+     );
+   })
+   // 🚀 NEW: Sort the filtered array to push Admins to the top
+   .sort((a, b) => {
+     const aIsAdmin = a.role?.includes("ADMIN");
+     const bIsAdmin = b.role?.includes("ADMIN");
 
-  // Derived Risk Data for Selected Member
+     if (aIsAdmin && !bIsAdmin) return -1; // Move a up
+     if (!aIsAdmin && bIsAdmin) return 1; // Move b up
+     return 0; // Leave their original sorting (Date Joined) intact if both are the same
+   });
+
   const memberLoans = allLoans.filter(
     (l) => l.cooperatorId?._id === selectedMember?._id,
   );
@@ -420,7 +572,6 @@ export default function MemberDirectoryPage() {
             className="bg-white dark:bg-[#1B1B25] rounded-sm shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-fade-in-up border border-slate-200 dark:border-slate-800 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 transition-colors">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-sm bg-[#2B2F42] text-white flex items-center justify-center font-bold text-xl overflow-hidden shadow-sm">
@@ -479,7 +630,6 @@ export default function MemberDirectoryPage() {
               </button>
             </div>
 
-            {/* Modal Tabs */}
             <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1B1B25] overflow-x-auto custom-scrollbar transition-colors">
               {[
                 { id: "IDENTITY", label: "Identity & Access" },
@@ -498,9 +648,7 @@ export default function MemberDirectoryPage() {
               ))}
             </div>
 
-            {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-[#12121A] custom-scrollbar transition-colors">
-              {/* TAB 1: IDENTITY & ACCESS */}
               {activeTab === "IDENTITY" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
@@ -596,7 +744,6 @@ export default function MemberDirectoryPage() {
                 </div>
               )}
 
-              {/* TAB 2: FINANCIAL CONTROL */}
               {activeTab === "FINANCIALS" && (
                 <div className="h-full">
                   {isAccountLoading || !memberAccount ? (
@@ -626,8 +773,15 @@ export default function MemberDirectoryPage() {
                                 )}
                               </span>
                             </div>
-
-                            {/* 🚀 FIX: Now displays the real-time calculated savings for the current month */}
+                            <div className="bg-white/10 p-3 rounded-sm flex justify-between items-center text-sm">
+                              <span className="text-slate-300">
+                                Total Dividends
+                              </span>
+                              <span className="font-bold text-purple-400">
+                                ₦
+                                {formatNaira(memberAccount.totalDividends || 0)}
+                              </span>
+                            </div>
                             <div className="bg-white/10 p-3 rounded-sm flex justify-between items-center text-sm">
                               <span className="text-slate-300">
                                 Current Monthly Savings
@@ -685,20 +839,33 @@ export default function MemberDirectoryPage() {
                             onChange={(e) => setAdjustAmount(e.target.value)}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-sm text-sm mb-3 focus:outline-none focus:border-slate-500 dark:focus:border-slate-400 transition-colors"
                           />
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             <button
-                              onClick={() => handleAdminAdjustment("CREDIT")}
+                              onClick={() =>
+                                handleAdminAdjustmentTrigger("CREDIT")
+                              }
                               disabled={isAdjusting || !adjustAmount}
-                              className="bg-[#20C997] text-white text-sm font-bold py-2 rounded-sm hover:opacity-90 disabled:opacity-50 shadow-sm"
+                              className="bg-[#20C997] text-white text-xs sm:text-sm font-bold py-2 rounded-sm hover:opacity-90 disabled:opacity-50 shadow-sm"
                             >
                               + Credit
                             </button>
                             <button
-                              onClick={() => handleAdminAdjustment("DEBIT")}
+                              onClick={() =>
+                                handleAdminAdjustmentTrigger("DEBIT")
+                              }
                               disabled={isAdjusting || !adjustAmount}
-                              className="bg-red-500 text-white text-sm font-bold py-2 rounded-sm hover:opacity-90 disabled:opacity-50 shadow-sm"
+                              className="bg-red-500 text-white text-xs sm:text-sm font-bold py-2 rounded-sm hover:opacity-90 disabled:opacity-50 shadow-sm"
                             >
                               - Debit
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleAdminAdjustmentTrigger("DIVIDEND")
+                              }
+                              disabled={isAdjusting || !adjustAmount}
+                              className="bg-purple-600 text-white text-xs sm:text-sm font-bold py-2 rounded-sm hover:opacity-90 disabled:opacity-50 shadow-sm"
+                            >
+                              🎁 Dividend
                             </button>
                           </div>
                         </div>
@@ -799,10 +966,8 @@ export default function MemberDirectoryPage() {
                 </div>
               )}
 
-              {/* TAB 3: LOAN & RISK PORTFOLIO */}
               {activeTab === "LOANS" && (
                 <div className="space-y-6">
-                  {/* User's Active Loans */}
                   <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
                       <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm">
@@ -858,7 +1023,6 @@ export default function MemberDirectoryPage() {
                     </div>
                   </div>
 
-                  {/* Guarantor Risk Exposure */}
                   <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                     <div className="p-4 border-b border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 transition-colors">
                       <h3 className="font-bold text-red-700 dark:text-red-400 text-sm flex items-center gap-2">
@@ -926,7 +1090,6 @@ export default function MemberDirectoryPage() {
                 </div>
               )}
 
-              {/* TAB 4: MICRO-LEDGER */}
               {activeTab === "LEDGER" && (
                 <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden h-full flex flex-col transition-colors">
                   <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
@@ -934,36 +1097,146 @@ export default function MemberDirectoryPage() {
                       Financial Forensics
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Recent localized ledger activity for this member.
+                      Localized ledger activity for this member.
                     </p>
                   </div>
-                  <div className="p-8 flex flex-col items-center justify-center flex-1 text-center">
-                    <svg
-                      className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Micro-Ledger Pending
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-                      Admin transactional filtering is currently being routed.
-                      In the interim, you can adjust balances in the Financial
-                      Control tab.
-                    </p>
+                  <div className="flex-1 overflow-x-auto">
+                    {isLedgerLoading ? (
+                      <div className="flex justify-center items-center py-20">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b5e3a] dark:border-emerald-500"></div>
+                      </div>
+                    ) : (
+                      <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
+                        <thead className="bg-slate-50 dark:bg-[#12121A]/50">
+                          <tr>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-center w-16 border border-slate-200 dark:border-slate-800">
+                              Status
+                            </th>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                              Description
+                            </th>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-right border border-slate-200 dark:border-slate-800">
+                              Debit
+                            </th>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-right border border-slate-200 dark:border-slate-800">
+                              Credit
+                            </th>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-right border border-slate-200 dark:border-slate-800">
+                              Dividends
+                            </th>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 text-right border border-slate-200 dark:border-slate-800">
+                              Total Balance
+                            </th>
+                            <th className="py-3 px-4 font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                              Date
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {memberTransactions.length === 0 ? (
+                            <tr>
+                              <td
+                                colSpan={7}
+                                className="py-8 text-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
+                              >
+                                No transactions recorded yet.
+                              </td>
+                            </tr>
+                          ) : (
+                            memberTransactions.map((txn) => {
+                              const isDividend =
+                                txn.type === "CREDIT" &&
+                                txn.description
+                                  ?.toLowerCase()
+                                  .includes("dividend");
+                              const isCredit =
+                                txn.type === "CREDIT" && !isDividend;
+                              const isDebit = txn.type === "DEBIT";
+
+                              return (
+                                <tr
+                                  key={txn._id}
+                                  className="hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
+                                >
+                                  <td className="py-3 px-4 text-center border border-slate-200 dark:border-slate-800">
+                                    <div
+                                      className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center flex-shrink-0 ${txn.type === "CREDIT" ? "bg-emerald-100 dark:bg-emerald-900/30 text-[#1b5e3a] dark:text-emerald-400" : "bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400"}`}
+                                    >
+                                      {txn.type === "CREDIT" ? (
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                          strokeWidth={2}
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M7 11l5-5m0 0l5 5m-5-5v12"
+                                          />
+                                        </svg>
+                                      ) : (
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                          strokeWidth={2}
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M17 13l-5 5m0 0l-5-5m5 5V6"
+                                          />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                                    {txn.description}
+                                  </td>
+                                  <td className="py-3 px-4 text-red-500 dark:text-red-400 text-right font-medium border border-slate-200 dark:border-slate-800">
+                                    {isDebit ? formatNaira(txn.amount) : ""}
+                                  </td>
+                                  <td className="py-3 px-4 text-[#1b5e3a] dark:text-emerald-400 text-right font-bold border border-slate-200 dark:border-slate-800">
+                                    {isCredit ? formatNaira(txn.amount) : ""}
+                                  </td>
+                                  <td className="py-3 px-4 text-purple-600 dark:text-purple-400 text-right font-bold border border-slate-200 dark:border-slate-800">
+                                    {isDividend ? formatNaira(txn.amount) : ""}
+                                  </td>
+                                  <td className="py-3 px-4 text-slate-800 dark:text-slate-200 text-right font-black border border-slate-200 dark:border-slate-800">
+                                    ₦{formatNaira(txn.balanceAfter || 0)}
+                                  </td>
+                                  <td className="py-3 px-4 text-slate-500 dark:text-slate-500 text-[11px] leading-tight border border-slate-200 dark:border-slate-800">
+                                    {new Date(txn.createdAt).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      },
+                                    )}
+                                    <br />
+                                    {new Date(txn.createdAt).toLocaleTimeString(
+                                      "en-US",
+                                      {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      },
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* TAB 5: COMMUNICATION */}
               {activeTab === "COMMS" && (
                 <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                   <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">

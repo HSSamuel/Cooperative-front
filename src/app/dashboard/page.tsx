@@ -85,10 +85,14 @@ export default function DashboardOverview() {
     month: "long",
     year: "numeric",
   });
+
+  // 🚀 FIX: Sync this exact logic with the Savings page to ignore dividends in "Saved this month"
   const currentMonthSavings = transactions
     .filter(
       (txn: any) =>
-        txn.type === "CREDIT" && txn.effectiveMonth === currentMonthString,
+        txn.type === "CREDIT" &&
+        txn.effectiveMonth === currentMonthString &&
+        !txn.description?.toLowerCase().includes("dividend"),
     )
     .reduce((sum: number, txn: any) => sum + txn.amount, 0);
 
@@ -152,8 +156,9 @@ export default function DashboardOverview() {
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.15-1.92H8.03c.05 1.78 1.16 2.92 2.87 3.33V19h2.34v-1.6c1.64-.32 2.89-1.41 2.89-2.99 0-1.85-1.42-2.74-3.82-3.27z" />
               </svg>
             </div>
+            {/* First Card - Was "Total Savings" */}
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              Total Savings
+              Available Balance
             </p>
             <div className="flex items-baseline gap-1 relative z-10">
               <span className="text-lg font-bold text-slate-400 dark:text-slate-500">
@@ -175,8 +180,9 @@ export default function DashboardOverview() {
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z" />
               </svg>
             </div>
+            {/* Second Card - Was "Saved This Month" */}
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              Saved This Month
+              Deposits This Month
             </p>
             <div className="flex items-baseline gap-1 relative z-10">
               <span className="text-lg font-bold text-slate-400 dark:text-slate-500">
@@ -328,7 +334,7 @@ export default function DashboardOverview() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {transactions.map((txn: any, index: number) => (
+                  {transactions.slice(0, 10).map((txn: any, index: number) => (
                     <div
                       key={txn._id || index}
                       className="flex items-start gap-3"
@@ -371,7 +377,6 @@ export default function DashboardOverview() {
                           {txn.description}
                         </p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          {/* 🚀 FIX: Apply explicit "en-GB" locale to prevent SSR/CSR Hydration Mismatch */}
                           {new Date(txn.createdAt).toLocaleDateString("en-GB")}{" "}
                           • {txn.effectiveMonth || "Auto"}
                         </p>

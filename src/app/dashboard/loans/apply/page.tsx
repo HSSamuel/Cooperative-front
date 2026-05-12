@@ -121,7 +121,7 @@ export default function ApplyForLoanPage() {
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/dashboard/loans"
-          className="text-slate-400 dark:text-slate-500 hover:text-[#1b5e3a] dark:hover:text-emerald-400 transition-colors p-2 bg-white dark:bg-[#1B1B25] rounded-full shadow-sm border border-slate-100 dark:border-slate-800"
+          className="text-slate-400 dark:text-slate-400 hover:text-[#1b5e3a] dark:hover:text-emerald-400 transition-colors p-2 bg-white dark:bg-[#1B1B25] rounded-full shadow-sm border border-slate-100 dark:border-slate-800"
         >
           <svg
             className="w-5 h-5"
@@ -417,7 +417,7 @@ export default function ApplyForLoanPage() {
                     <option value={36}>36 Months</option>
                   </select>
                 </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 leading-tight">
+                <p className="text-[10px] text-slate-400  mt-2 leading-tight">
                   Based on a {tenure}-month repayment tenure at{" "}
                   <strong className="text-slate-700 dark:text-slate-300">
                     {totalInterestPercentage.toFixed(1)}% total interest

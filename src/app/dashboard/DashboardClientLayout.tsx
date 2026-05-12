@@ -53,8 +53,6 @@ export default function DashboardClientLayout({
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-
-  // 🚀 FIX: Added loading state for logout
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const socket = useSocket(user?._id || user?.id);
@@ -90,19 +88,23 @@ export default function DashboardClientLayout({
           });
 
         setNotifications(formattedNotifs);
+
+        // 🚀 REAL-TIME LEDGER SYNC: Automatically refresh the Redux Financial State
+        // whenever the Admin or System pushes a change to this user!
+        dispatch(fetchFinancialData());
       } catch (error) {
         console.error("Silent fetch failed", error);
       }
     };
 
     socket.on("new_guarantor_request", fetchFreshNotifications);
-    socket.on("update_notifications", fetchFreshNotifications);
+    socket.on("update_notifications", fetchFreshNotifications); // Triggers on Admin Adjustments/Dividends
 
     return () => {
       socket.off("new_guarantor_request", fetchFreshNotifications);
       socket.off("update_notifications", fetchFreshNotifications);
     };
-  }, [socket]);
+  }, [socket, dispatch]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("coop_user");
@@ -143,7 +145,6 @@ export default function DashboardClientLayout({
   };
 
   const handleLogout = async () => {
-    // 🚀 FIX: Set loading state
     setIsLoggingOut(true);
     try {
       await apiClient.post("/auth/logout");
@@ -153,9 +154,7 @@ export default function DashboardClientLayout({
 
     localStorage.removeItem("coop_user");
     localStorage.removeItem("coop_token_raw");
-
     await clearAuthCookie();
-
     dispatch(clearFinanceData());
     router.push("/login");
   };
@@ -292,7 +291,6 @@ export default function DashboardClientLayout({
             </>
           )}
 
-          {/* 🚀 FIX: Spinner added for log out */}
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}

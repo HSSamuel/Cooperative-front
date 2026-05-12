@@ -386,7 +386,7 @@ export default function AdminLayout({
             <div className="relative">
               <button
                 onClick={handleToggleNotifications}
-                className="relative p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-[#1b5e3a] dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="relative p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-[#1b5e3a] dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <svg
                   className="w-5 h-5"
