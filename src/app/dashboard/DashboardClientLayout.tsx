@@ -10,7 +10,7 @@ import { useDispatch } from "react-redux";
 import { fetchFinancialData, clearFinanceData } from "../../store/financeSlice";
 import type { AppDispatch } from "../../store";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { clearAuthCookie } from "../actions/auth";
+import { clearAuthCookieAndRedirect } from "@/app/actions/auth";
 
 export default function DashboardClientLayout({
   children,
@@ -89,8 +89,7 @@ export default function DashboardClientLayout({
 
         setNotifications(formattedNotifs);
 
-        // 🚀 REAL-TIME LEDGER SYNC: Automatically refresh the Redux Financial State
-        // whenever the Admin or System pushes a change to this user!
+        // REAL-TIME LEDGER SYNC: Automatically refresh the Redux Financial State
         dispatch(fetchFinancialData());
       } catch (error) {
         console.error("Silent fetch failed", error);
@@ -98,7 +97,7 @@ export default function DashboardClientLayout({
     };
 
     socket.on("new_guarantor_request", fetchFreshNotifications);
-    socket.on("update_notifications", fetchFreshNotifications); // Triggers on Admin Adjustments/Dividends
+    socket.on("update_notifications", fetchFreshNotifications);
 
     return () => {
       socket.off("new_guarantor_request", fetchFreshNotifications);
@@ -144,20 +143,20 @@ export default function DashboardClientLayout({
     }
   };
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await apiClient.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error", error);
-    }
+const handleLogout = async () => {
+  setIsLoggingOut(true);
+  try {
+    await apiClient.post("/auth/logout");
+  } catch (error) {
+    console.error("Logout error", error);
+  }
 
-    localStorage.removeItem("coop_user");
-    localStorage.removeItem("coop_token_raw");
-    await clearAuthCookie();
-    dispatch(clearFinanceData());
-    router.push("/login");
-  };
+  localStorage.removeItem("coop_user");
+  localStorage.removeItem("coop_token_raw");
+
+  // 🚀 Let the Server Action handle BOTH the cookie wipe and the safe redirection!
+  await clearAuthCookieAndRedirect();
+};
 
   const handleToggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
@@ -228,7 +227,7 @@ export default function DashboardClientLayout({
                 ASCON
               </span>
               <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] leading-tight">
-                Co-operative
+                Cooperative
               </span>
             </div>
           </Link>
@@ -422,7 +421,11 @@ export default function DashboardClientLayout({
                         notifications.slice(0, 5).map((notif) => (
                           <div
                             key={notif.id}
-                            className={`p-4 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${notif.unread ? "bg-slate-50/50 dark:bg-emerald-900/10" : ""}`}
+                            onClick={() => {
+                              setIsNotificationsOpen(false);
+                              router.push("/dashboard/notifications");
+                            }}
+                            className={`block w-full text-left p-4 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${notif.unread ? "bg-slate-50/50 dark:bg-emerald-900/10" : ""}`}
                           >
                             <h4
                               className={`text-xs ${notif.unread ? "font-bold text-slate-800 dark:text-slate-200" : "font-medium text-slate-600 dark:text-slate-400"}`}
@@ -437,13 +440,15 @@ export default function DashboardClientLayout({
                       )}
                     </div>
                     <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
-                      <Link
-                        href="/dashboard/notifications"
-                        onClick={() => setIsNotificationsOpen(false)}
+                      <button
+                        onClick={() => {
+                          setIsNotificationsOpen(false);
+                          router.push("/dashboard/notifications");
+                        }}
                         className="text-xs font-bold text-[#1b5e3a] dark:text-emerald-400 hover:underline"
                       >
                         View all alerts
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </>
@@ -451,8 +456,8 @@ export default function DashboardClientLayout({
             </div>
 
             <div className="relative cursor-pointer hover:opacity-80 transition-opacity pl-2">
-              <Link
-                href="/dashboard/profile"
+              <div
+                onClick={() => router.push("/dashboard/profile")}
                 className="flex items-center gap-3"
               >
                 <div className="text-right hidden md:block">
@@ -477,7 +482,7 @@ export default function DashboardClientLayout({
                   )}
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#20C997] rounded-full border-2 border-white dark:border-[#1B1B25]"></span>
                 </div>
-              </Link>
+              </div>
             </div>
           </div>
         </header>

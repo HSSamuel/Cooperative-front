@@ -7,6 +7,7 @@ import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function ProfileBioDataPage() {
   const { account, loans, transactions, status } = useSelector(
@@ -53,17 +54,15 @@ const currentMonthString = new Date().toLocaleString("en-GB", {
   year: "numeric",
 });
 
-// 🚀 FIX: Added the dividend exclusion filter so regular cooperators see the correct value
 const currentMonthSavings = transactions
   .filter(
     (txn: any) =>
       txn.type === "CREDIT" &&
       txn.effectiveMonth === currentMonthString &&
-      !txn.description?.toLowerCase().includes("dividend"), // <-- Add this line
+      !txn.description?.toLowerCase().includes("dividend"), 
   )
   .reduce((sum: number, txn: any) => sum + txn.amount, 0);
 
-  // Replaced handleImageUpload with a local preview handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -71,9 +70,7 @@ const currentMonthSavings = transactions
       return toast.error("Image is too large. Must be less than 5MB.");
     }
 
-    // Store the actual file to upload later
     setSelectedFile(file);
-    // Create a temporary local URL to show the user immediately
     setPreviewUrl(URL.createObjectURL(file));
   };
 
@@ -150,6 +147,13 @@ const currentMonthSavings = transactions
 
   return (
     <div className="animate-fade-in-up pb-10 relative">
+      
+      {/* 🚀 Global Spinner Overlay */}
+      <GlobalSpinner 
+        isLoading={isSaving || isUploadingImage} 
+        text={isUploadingImage ? "Uploading Photo..." : "Updating Profile Data..."} 
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: PROFILE CARD */}
         <div className="lg:col-span-4 flex flex-col shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1B1B25] rounded-sm overflow-hidden lg:sticky lg:top-6 transition-colors">

@@ -237,13 +237,19 @@ export default function HRReportsPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto flex-1">
+            <div className="overflow-x-auto flex-1 custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-white dark:bg-[#1B1B25] text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 transition-colors">
-                    <th className="px-6 py-3 font-bold">Cooperator</th>
-                    <th className="px-6 py-3 font-bold">Outstanding Balance</th>
-                    <th className="px-6 py-3 font-bold">Guarantors</th>
+                    <th className="px-6 py-3 font-bold whitespace-nowrap">
+                      Cooperator
+                    </th>
+                    <th className="px-6 py-3 font-bold whitespace-nowrap">
+                      Outstanding Balance
+                    </th>
+                    <th className="px-6 py-3 font-bold whitespace-nowrap">
+                      Guarantors
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -283,7 +289,7 @@ export default function HRReportsPage() {
                           key={loan._id}
                           className="hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="font-bold text-slate-800 dark:text-slate-200 text-sm">
                               {loan.cooperatorId?.lastName}{" "}
                               {loan.cooperatorId?.firstName}
@@ -292,7 +298,7 @@ export default function HRReportsPage() {
                               {loan.cooperatorId?.fileNumber}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="font-bold text-red-600 dark:text-red-400 text-sm">
                               {formatNaira(balance)}
                             </div>
@@ -305,8 +311,7 @@ export default function HRReportsPage() {
                               ></div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            {/* 🚀 FIX: Use guarantor1 and guarantor2 instead of the undefined guarantors array */}
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
                               {loan.guarantor1
                                 ? `G1 Status: ${loan.guarantor1.status}`

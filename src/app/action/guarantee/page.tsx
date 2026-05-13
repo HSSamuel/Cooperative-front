@@ -4,23 +4,21 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import apiClient from "@/lib/axios";
 import Link from "next/link";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 function ActionProcessor() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Added "ready" state
   const [status, setStatus] = useState<
     "verifying" | "ready" | "processing" | "success" | "error" | "unauthorized"
   >("verifying");
   const [message, setMessage] = useState("Verifying your secure link...");
 
-  // Store the params in state so the user can manually trigger the API call later
   const [loanId, setLoanId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Verify the link safely without firing the PUT request
     const id = searchParams.get("loanId");
     const action = searchParams.get("action");
     const userStr = localStorage.getItem("coop_user");
@@ -41,7 +39,6 @@ function ActionProcessor() {
       return;
     }
 
-    // 2. Set the ready state and await user confirmation
     setLoanId(id);
     setActionType(action);
     setStatus("ready");
@@ -52,8 +49,6 @@ function ActionProcessor() {
 
   const handleConfirmAction = async () => {
     setStatus("processing");
-    setMessage("Processing your decision...");
-
     try {
       await apiClient.put(`/loans/${loanId}/guarantee`, { action: actionType });
 
@@ -75,9 +70,17 @@ function ActionProcessor() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+      <GlobalSpinner
+        isLoading={status === "verifying" || status === "processing"}
+        text={
+          status === "verifying"
+            ? "Verifying Secure Link..."
+            : "Processing Decision..."
+        }
+      />
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-slate-100 text-center">
-        {/* NEW: The Manual Confirmation UI */}
         {status === "ready" && (
           <div className="animate-fade-in-up">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
@@ -113,38 +116,6 @@ function ActionProcessor() {
                 Cancel
               </Link>
             </div>
-          </div>
-        )}
-
-        {(status === "verifying" || status === "processing") && (
-          <div className="animate-pulse">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 mb-4">
-              <svg
-                className="animate-spin h-6 w-6 text-emerald-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">
-              {status === "verifying"
-                ? "Verifying Link..."
-                : "Processing Request..."}
-            </h3>
           </div>
         )}
 

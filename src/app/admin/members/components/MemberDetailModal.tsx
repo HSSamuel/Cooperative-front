@@ -80,9 +80,9 @@ export default function MemberDetailModal({
         className="bg-white dark:bg-[#1B1B25] rounded-sm shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-fade-in-up border border-slate-200 dark:border-slate-800 transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-sm bg-[#2B2F42] text-white flex items-center justify-center font-bold text-xl overflow-hidden shadow-sm">
+        <div className="flex justify-between items-center p-3 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 transition-colors gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-sm bg-[#2B2F42] text-white flex items-center justify-center font-bold text-base sm:text-xl overflow-hidden shadow-sm flex-shrink-0">
               {selectedMember.avatarUrl ? (
                 <img
                   src={selectedMember.avatarUrl}
@@ -92,9 +92,10 @@ export default function MemberDetailModal({
                 selectedMember.lastName?.charAt(0)
               )}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 leading-none">
+
+            <div className="min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-1.5 sm:gap-2 w-max">
+                <h2 className="text-[13px] sm:text-xl font-bold text-slate-800 dark:text-slate-200 leading-tight whitespace-nowrap">
                   {selectedMember.firstName}{" "}
                   {selectedMember.otherName
                     ? `${selectedMember.otherName} `
@@ -103,27 +104,28 @@ export default function MemberDetailModal({
                 </h2>
                 {memberAccount?.status === "ACTIVE" ? (
                   <span
-                    className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
+                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"
                     title="Account Active"
                   ></span>
                 ) : (
                   <span
-                    className="w-2 h-2 rounded-full bg-red-500"
+                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 flex-shrink-0"
                     title="Account Inactive"
                   ></span>
                 )}
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 whitespace-nowrap w-max">
                 {selectedMember.fileNumber} • {selectedMember.email}
               </p>
             </div>
           </div>
+
           <button
             onClick={closeModal}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transition-colors flex-shrink-0"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5 sm:w-6 sm:h-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -138,22 +140,29 @@ export default function MemberDetailModal({
           </button>
         </div>
 
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1B1B25] overflow-x-auto custom-scrollbar transition-colors">
-          {[
-            { id: "IDENTITY", label: "Identity & Access" },
-            { id: "FINANCIALS", label: "Financial Control" },
-            { id: "LOANS", label: "Loan & Risk Portfolio" },
-            { id: "LEDGER", label: "Micro-Ledger" },
-            { id: "COMMS", label: "Communication" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
-              className={`py-3 px-5 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id ? "border-[#1b5e3a] dark:border-emerald-500 text-[#1b5e3a] dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* TAB NAVIGATION - FIXED STRUCTURE */}
+        <div className="bg-white dark:bg-[#1B1B25] border-b border-slate-200 dark:border-slate-800 transition-colors">
+          <nav className="-mb-px flex overflow-x-auto custom-scrollbar">
+            {[
+              { id: "IDENTITY", label: "Identity & Access" },
+              { id: "FINANCIALS", label: "Financial Control" },
+              { id: "LOANS", label: "Loan & Risk Portfolio" },
+              { id: "LEDGER", label: "Micro-Ledger" },
+              { id: "COMMS", label: "Communication" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`py-3 px-5 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? "border-[#1b5e3a] dark:border-emerald-500 text-[#1b5e3a] dark:text-emerald-400 bg-transparent"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-[#12121A] custom-scrollbar transition-colors">

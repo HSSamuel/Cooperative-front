@@ -9,6 +9,17 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
   const [notifications, setNotifications] = useState<any[]>([]);
 
+  // States for the Contact Admin Modal
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  // States for the Reply Modal
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
+
   useEffect(() => {
     fetchNotifications();
   }, []);
@@ -39,6 +50,10 @@ export default function NotificationsPage() {
             }),
             unread: !n.isRead,
             type: n.type || "info",
+            sender: n.sender?._id || n.sender, // Keep ID for replying
+            senderName: n.sender
+              ? `${n.sender.firstName} ${n.sender.lastName}`
+              : null, // 🚀 NEW: Store Name
           };
         });
 
@@ -79,6 +94,48 @@ export default function NotificationsPage() {
       toast.success("Alert permanently deleted.");
     } catch (error) {
       toast.error("Failed to delete notification.");
+    }
+  };
+
+  const handleSendMessageToAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactSubject.trim() || !contactMessage.trim()) {
+      return toast.error("Please fill in both the subject and your message.");
+    }
+
+    setIsSendingMessage(true);
+    try {
+      await apiClient.post("/notifications/contact-admin", {
+        subject: contactSubject,
+        message: contactMessage,
+      });
+      toast.success("Message delivered to Administration!");
+      setIsContactModalOpen(false);
+      setContactSubject("");
+      setContactMessage("");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to send message.");
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyMessage.trim()) return toast.error("Please enter a message.");
+
+    setIsSendingReply(true);
+    try {
+      await apiClient.post(`/notifications/${replyingTo.id}/reply`, {
+        message: replyMessage,
+      });
+      toast.success("Reply delivered!");
+      setReplyingTo(null);
+      setReplyMessage("");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to send reply.");
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -219,7 +276,27 @@ export default function NotificationsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setIsContactModalOpen(true)}
+            className="flex items-center gap-2 bg-[#1b5e3a] hover:bg-[#124228] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+            Message Admin
+          </button>
+
           <div className="flex p-1 bg-slate-200/50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">
             <button
               onClick={() => setFilter("ALL")}
@@ -313,9 +390,24 @@ export default function NotificationsPage() {
                   >
                     {notif.message}
                   </p>
+
+                  {/* 🚀 NEW: Cleanly display the sender's name below the message */}
+                  {notif.senderName && (
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2.5 font-medium">
+                      From: {notif.senderName}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-slate-100 dark:border-slate-800 sm:border-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity gap-2">
+                  {notif.sender && (
+                    <button
+                      onClick={() => setReplyingTo(notif)}
+                      className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      Reply
+                    </button>
+                  )}
                   {notif.unread ? (
                     <button
                       onClick={() => handleMarkAsRead(notif.id)}
@@ -353,6 +445,204 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+
+      {/* Message Admin Modal */}
+      {isContactModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-900/80 transition-opacity backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#1B1B25] rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-fade-in-up border border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  Message Administration
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Send a direct inquiry to the cooperative leadership.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsContactModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSendMessageToAdmin} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Subject Header
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={contactSubject}
+                  onChange={(e) => setContactSubject(e.target.value)}
+                  placeholder="e.g. Question regarding my recent loan"
+                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Official Message
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  placeholder="Type your message here..."
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors resize-none custom-scrollbar"
+                ></textarea>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingMessage}
+                  className="px-6 py-2.5 bg-[#1b5e3a] hover:bg-[#124228] text-white text-sm font-bold rounded-lg shadow-md transition-all disabled:opacity-70 flex items-center gap-2"
+                >
+                  {isSendingMessage ? "Dispatching..." : "Send Message"}
+                  {!isSendingMessage && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {replyingTo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-900/80 transition-opacity backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#1B1B25] rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-fade-in-up border border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  Reply to Message
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[300px]">
+                  Re:{" "}
+                  {replyingTo.title.replace(
+                    /^(Re:\s*|Inquiry:\s*|Message from[^:]*:\s*)+/i,
+                    "",
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setReplyingTo(null);
+                  setReplyMessage("");
+                }}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSendReply} className="p-6 space-y-5">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic line-clamp-3">
+                  "{replyingTo.message}"
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Your Reply
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Type your response here..."
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#1b5e3a] dark:focus:border-emerald-500 transition-colors resize-none custom-scrollbar"
+                ></textarea>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReplyingTo(null);
+                    setReplyMessage("");
+                  }}
+                  className="px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingReply}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-all disabled:opacity-70 flex items-center gap-2"
+                >
+                  {isSendingReply ? "Sending..." : "Send Reply"}
+                  {!isSendingReply && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import apiClient from "@/lib/axios";
 import Link from "next/link";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 function AdminActionProcessor() {
   const searchParams = useSearchParams();
@@ -37,7 +38,6 @@ function AdminActionProcessor() {
       }
 
       try {
-        // 🚀 Clean apiClient call
         await apiClient.put(`/loans/${loanId}/review`, {
           status: action,
           adminComment: "Reviewed via Email Action Link",
@@ -62,38 +62,13 @@ function AdminActionProcessor() {
   }, [searchParams, router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-slate-100 text-center">
-        {status === "processing" && (
-          <div className="animate-pulse">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-4">
-              <svg
-                className="animate-spin h-6 w-6 text-amber-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">
-              Executing Admin Override...
-            </h3>
-          </div>
-        )}
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+      <GlobalSpinner
+        isLoading={status === "processing"}
+        text="Executing Admin Override..."
+      />
 
+      <div className="sm:mx-auto sm:w-full sm:max-w-md bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-slate-100 text-center">
         {status === "success" && (
           <div className="animate-fade-in-up">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 mb-4">

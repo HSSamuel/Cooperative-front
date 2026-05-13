@@ -8,14 +8,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { syncAuthCookie } from "../actions/auth";
 
-function LoginForm() {
+function LoginForm({
+  isLoading,
+  setIsLoading,
+}: {
+  isLoading: boolean;
+  setIsLoading: (state: boolean) => void;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [fileNumber, setFileNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,8 +67,7 @@ function LoginForm() {
       toast.error(
         err.response?.data?.message || err.message || "Invalid credentials.",
       );
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only disable loading if it fails. If success, let it spin until redirect finishes.
     }
   };
 
@@ -150,47 +154,43 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* 🚀 FIX: Added spinner, flex, justify-center, items-center, and gap-2 */}
       <button
         type="submit"
         disabled={isLoading}
         className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1b5e3a] hover:bg-[#124228] text-white text-sm font-bold rounded-sm shadow-sm transition-colors disabled:opacity-70 mt-2"
       >
-        {isLoading ? (
-          <>
-            <svg
-              className="animate-spin h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Authenticating...
-          </>
-        ) : (
-          "Login"
-        )}
+        {isLoading ? "Authenticating..." : "Login"}
       </button>
     </form>
   );
 }
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
   return (
-    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors relative">
+      {/* 🚀 Global Logo Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/70 dark:bg-[#12121A]/80 backdrop-blur-sm transition-all duration-300">
+          <div className="relative flex items-center justify-center w-24 h-24">
+            {/* Outer spinning track for a sleek tech effect */}
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-100/50 dark:border-emerald-900/30 border-t-[#1b5e3a] dark:border-t-emerald-400 animate-spin"></div>
+
+            {/* The ASCON Logo (Rolling) */}
+            <img
+              src="/ascon-logo.png"
+              alt="Authenticating..."
+              className="w-12 h-12 object-contain animate-[spin_3s_linear_infinite]"
+            />
+          </div>
+
+          <p className="mt-5 text-sm font-bold text-[#1b5e3a] dark:text-emerald-400 animate-pulse tracking-wide">
+            Securing Connection...
+          </p>
+        </div>
+      )}
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
@@ -227,7 +227,8 @@ export default function LoginPage() {
               </div>
             }
           >
-            <LoginForm />
+            {/* We pass the loading state up to the parent page so it can trigger the global overlay */}
+            <LoginForm isLoading={isLoading} setIsLoading={setIsLoading} />
           </Suspense>
 
           <p className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">

@@ -7,7 +7,7 @@ import Image from "next/image";
 import apiClient from "@/lib/axios";
 import { useSocket } from "../../hooks/useSocket";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { clearAuthCookie } from "../actions/auth";
+import { clearAuthCookieAndRedirect } from "@/app/actions/auth";
 
 export default function AdminLayout({
   children,
@@ -30,7 +30,6 @@ export default function AdminLayout({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // 🚀 FIX: Added loading states for log out and exit
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -138,27 +137,24 @@ export default function AdminLayout({
   };
 
   const handleExitConsole = () => {
-    // 🚀 FIX: Set loading state
     setIsExiting(true);
     router.push("/dashboard");
   };
 
-  const handleLogout = async () => {
-    // 🚀 FIX: Set loading state
-    setIsLoggingOut(true);
-    try {
-      await apiClient.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error", error);
-    }
+const handleLogout = async () => {
+  setIsLoggingOut(true);
+  try {
+    await apiClient.post("/auth/logout");
+  } catch (error) {
+    console.error("Logout error", error);
+  }
 
-    localStorage.removeItem("coop_user");
-    localStorage.removeItem("coop_token_raw");
+  localStorage.removeItem("coop_user");
+  localStorage.removeItem("coop_token_raw");
 
-    await clearAuthCookie();
-
-    router.push("/login");
-  };
+  // 🚀 Let the Server Action handle BOTH the cookie wipe and the safe redirection!
+  await clearAuthCookieAndRedirect();
+};
 
   const navItems = [
     {
@@ -215,7 +211,7 @@ export default function AdminLayout({
                 ASCON
               </span>
               <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] leading-tight">
-                Co-operative
+                Cooperative
               </span>
             </div>
           </Link>
@@ -252,7 +248,6 @@ export default function AdminLayout({
           })}
           <div className="my-4 border-t border-[#313140] mx-4"></div>
 
-          {/* 🚀 FIX: Spinner added for Exit */}
           <button
             onClick={handleExitConsole}
             disabled={isExiting}
@@ -299,7 +294,6 @@ export default function AdminLayout({
             </span>
           </button>
 
-          {/* 🚀 FIX: Spinner added for log out */}
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
@@ -376,7 +370,7 @@ export default function AdminLayout({
                   ? "Member Directory"
                   : pathname.includes("settings")
                     ? "System Architecture"
-                    : "Admin"}
+                    : "HR Reports"}
             </h1>
           </div>
 
@@ -414,7 +408,6 @@ export default function AdminLayout({
                     className="fixed inset-0 z-40"
                     onClick={() => setIsNotificationsOpen(false)}
                   />
-                  {/* 🚀 FIX: Made the dropdown fixed and fully centered on mobile, reverting to normal absolute alignment on desktop */}
                   <div className="fixed sm:absolute top-[84px] sm:top-auto left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0 mt-0 sm:mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-sm bg-white dark:bg-[#1B1B25] rounded-sm shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 animate-fade-in-up">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50 flex justify-between items-center">
                       <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
@@ -438,7 +431,11 @@ export default function AdminLayout({
                         notifications.slice(0, 5).map((notif) => (
                           <div
                             key={notif.id}
-                            className={`p-4 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${notif.unread ? "bg-slate-50/50 dark:bg-emerald-900/10" : ""}`}
+                            onClick={() => {
+                              setIsNotificationsOpen(false);
+                              router.push("/dashboard/notifications");
+                            }}
+                            className={`block w-full text-left p-4 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${notif.unread ? "bg-slate-50/50 dark:bg-emerald-900/10" : ""}`}
                           >
                             <h4
                               className={`text-xs ${notif.unread ? "font-bold text-slate-800 dark:text-slate-200" : "font-medium text-slate-600 dark:text-slate-400"}`}
@@ -453,13 +450,15 @@ export default function AdminLayout({
                       )}
                     </div>
                     <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#12121A]/50">
-                      <Link
-                        href="/dashboard/notifications"
-                        onClick={() => setIsNotificationsOpen(false)}
+                      <button
+                        onClick={() => {
+                          setIsNotificationsOpen(false);
+                          router.push("/dashboard/notifications");
+                        }}
                         className="text-xs font-bold text-[#1b5e3a] dark:text-emerald-400 hover:underline"
                       >
                         View all alerts
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </>

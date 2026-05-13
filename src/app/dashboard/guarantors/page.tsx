@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function GuarantorRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -63,7 +64,12 @@ export default function GuarantorRequestsPage() {
   }
 
   return (
-    <div className="animate-fade-in-up pb-10">
+    <div className="animate-fade-in-up pb-10 relative">
+      <GlobalSpinner
+        isLoading={processingId !== null}
+        text="Processing Decision..."
+      />
+
       <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 transition-colors">
         <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">
           Guarantor Requests
@@ -107,16 +113,14 @@ export default function GuarantorRequestsPage() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleAction(loan._id, "ACCEPTED")}
-                          disabled={processingId === loan._id}
+                          disabled={processingId !== null}
                           className="px-4 py-1.5 bg-[#20C997] text-white text-xs font-semibold rounded-sm shadow-sm hover:opacity-90 disabled:opacity-50"
                         >
-                          {processingId === loan._id
-                            ? "Processing..."
-                            : "Accept"}
+                          Accept
                         </button>
                         <button
                           onClick={() => handleAction(loan._id, "DECLINED")}
-                          disabled={processingId === loan._id}
+                          disabled={processingId !== null}
                           className="px-4 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-sm shadow-sm hover:opacity-90 disabled:opacity-50"
                         >
                           Decline

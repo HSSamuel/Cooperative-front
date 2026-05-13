@@ -3,13 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ThemeToggle } from "@/components/ThemeToggle"; // 🚀 Imported ThemeToggle
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleNavigation = () => {
+    setIsNavigating(true);
+  };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] font-sans transition-colors">
+    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] font-sans transition-colors relative">
+      <InstallPrompt />
+
+      {/* 🚀 Global Spinner for Route Transitions */}
+      <GlobalSpinner
+        isLoading={isNavigating}
+        text="Connecting to Secure Portal..."
+      />
+
       {/* 1. SOLID ENTERPRISE NAVIGATION */}
       <nav className="fixed w-full z-50 bg-white dark:bg-[#1B1B25] border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,7 +42,7 @@ export default function Home() {
                   ASCON
                 </span>
                 <span className="font-bold text-lg tracking-tight text-[#1b5e3a] dark:text-emerald-400 leading-tight">
-                  Co-operative
+                  Cooperative
                 </span>
               </div>
             </div>
@@ -37,12 +52,14 @@ export default function Home() {
               <ThemeToggle />
               <Link
                 href="/login"
+                onClick={handleNavigation}
                 className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-[#1b5e3a] dark:hover:text-emerald-400 transition px-2"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
+                onClick={handleNavigation}
                 className="text-sm font-bold bg-[#1b5e3a] dark:bg-[#1b5e3a] text-white px-6 py-2 rounded-sm hover:bg-[#124228] transition shadow-sm whitespace-nowrap"
               >
                 Create Account
@@ -83,14 +100,20 @@ export default function Home() {
             <div className="px-5 pt-4 pb-6 space-y-4">
               <Link
                 href="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleNavigation();
+                }}
                 className="block w-full text-center text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-3 rounded-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleNavigation();
+                }}
                 className="block w-full text-center text-sm font-bold bg-[#1b5e3a] text-white py-3 rounded-sm hover:bg-[#124228] transition-colors"
               >
                 Create Account
@@ -118,12 +141,14 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               href="/register"
+              onClick={handleNavigation}
               className="w-full sm:w-auto text-sm font-bold bg-white text-[#1b5e3a] px-8 py-3.5 rounded-sm hover:bg-slate-100 transition shadow-md"
             >
               Start Saving Today
             </Link>
             <Link
               href="/login"
+              onClick={handleNavigation}
               className="w-full sm:w-auto text-sm font-bold bg-white/10 text-white border border-white/20 px-8 py-3.5 rounded-sm hover:bg-white/20 transition"
             >
               Access Dashboard

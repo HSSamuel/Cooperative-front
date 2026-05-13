@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 import {
   PieChart,
   Pie,
@@ -59,7 +60,13 @@ export default function DashboardOverview() {
 
   if (status === "loading" || status === "idle") {
     return (
-      <div className="animate-pulse flex flex-col gap-6 h-[800px] w-full">
+      <div className="animate-pulse flex flex-col gap-6 h-[800px] w-full relative">
+        {/* 🚀 Global Spinner sitting perfectly on top of the pulsing layout */}
+        <GlobalSpinner
+          isLoading={true}
+          text="Synchronizing Financial Ledger..."
+        />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
           <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
@@ -86,7 +93,6 @@ export default function DashboardOverview() {
     year: "numeric",
   });
 
-  // 🚀 FIX: Sync this exact logic with the Savings page to ignore dividends in "Saved this month"
   const currentMonthSavings = transactions
     .filter(
       (txn: any) =>

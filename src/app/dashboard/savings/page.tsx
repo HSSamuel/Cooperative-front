@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchFinancialData } from "@/store/financeSlice";
 import type { AppDispatch, RootState } from "@/store";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export default function SavingsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -118,6 +119,7 @@ export default function SavingsPage() {
 
   return (
     <div className="animate-fade-in-up pb-10 relative">
+      <InstallPrompt />
       <div className="flex flex-col gap-6 w-full">
         <div className="bg-[#1b5e3a] p-6 rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-6 shadow-md border border-[#124228]">
           <div className="bg-white dark:bg-[#1B1B25] rounded-sm p-6 flex flex-col items-center justify-center text-center shadow-sm transition-colors">

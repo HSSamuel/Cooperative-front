@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { fetchFinancialData } from "@/store/financeSlice";
 import type { AppDispatch } from "@/store";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function ApplyForLoanPage() {
   const router = useRouter();
@@ -16,6 +17,10 @@ export default function ApplyForLoanPage() {
   const [loanType, setLoanType] = useState("REGULAR");
   const [amountRequested, setAmountRequested] = useState("");
   const [tenure, setTenure] = useState<number>(10);
+  const [allowedTenures, setAllowedTenures] = useState<number[]>([
+    10, 20, 30, 36,
+  ]);
+
   const [guarantor1, setGuarantor1] = useState("");
   const [guarantor2, setGuarantor2] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,8 +41,21 @@ export default function ApplyForLoanPage() {
         ]);
 
         setCreditLimit(accountRes.data.availableCreditLimit);
-        setInterestRate(settingsRes.data.settings?.interestRate ?? 10);
-        setFormFee(settingsRes.data.settings?.loanFormFee ?? 50000);
+
+        const fetchedSettings = settingsRes.data.settings || {};
+        setInterestRate(fetchedSettings.interestRate ?? 10);
+        setFormFee(fetchedSettings.loanFormFee ?? 50000);
+
+        if (
+          fetchedSettings.loanTenures &&
+          fetchedSettings.loanTenures.length > 0
+        ) {
+          setAllowedTenures(fetchedSettings.loanTenures);
+          // Set default tenure if current is not in the list
+          if (!fetchedSettings.loanTenures.includes(tenure)) {
+            setTenure(fetchedSettings.loanTenures[0]);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch data", error);
         toast.error("Could not verify your application limits.");
@@ -47,7 +65,7 @@ export default function ApplyForLoanPage() {
     };
 
     fetchData();
-  }, []);
+  }, []); // Only run once on mount
 
   const formatNaira = (amountInKobo: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -59,7 +77,7 @@ export default function ApplyForLoanPage() {
   const requestedValueKobo = Math.round(
     (parseFloat(amountRequested) || 0) * 100,
   );
-  const totalInterestPercentage = interestRate * (tenure / 10);
+  const totalInterestPercentage = interestRate;
   const interestAmountKobo = Math.round(
     requestedValueKobo * (totalInterestPercentage / 100),
   );
@@ -101,8 +119,7 @@ export default function ApplyForLoanPage() {
       toast.error(
         error.response?.data?.message || "Failed to submit application.",
       );
-    } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Only toggle if failed to allow global overlay to hold during redirect
     }
   };
 
@@ -116,7 +133,13 @@ export default function ApplyForLoanPage() {
   }
 
   return (
-    <div className="animate-fade-in-up pb-10">
+    <div className="animate-fade-in-up pb-10 relative">
+      {/* 🚀 Global Spinner Overlay */}
+      <GlobalSpinner
+        isLoading={isSubmitting}
+        text="Submitting application..."
+      />
+
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/dashboard/loans"
@@ -373,9 +396,8 @@ export default function ApplyForLoanPage() {
                 )}
               </button>
               <div className="text-[11px] leading-snug font-medium text-amber-700 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 rounded-sm border border-amber-200 dark:border-amber-800/50 w-full text-center sm:text-left">
-                A non-refundable fee of{" "}
-                <strong>₦{formatNaira(formFee)}</strong> will be automatically
-                deducted for Application form.
+                A non-refundable fee of <strong>₦{formatNaira(formFee)}</strong>{" "}
+                will be automatically deducted for Application form.
               </div>
             </div>
           </form>
@@ -440,13 +462,14 @@ export default function ApplyForLoanPage() {
                     onChange={(e) => setTenure(Number(e.target.value))}
                     className="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1b5e3a]"
                   >
-                    <option value={10}>10 Months</option>
-                    <option value={20}>20 Months</option>
-                    <option value={30}>30 Months</option>
-                    <option value={36}>36 Months</option>
+                    {allowedTenures.map((t) => (
+                      <option key={t} value={t}>
+                        {t} Months
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <p className="text-[10px] text-slate-400  mt-2 leading-tight">
+                <p className="text-[10px] text-slate-400 mt-2 leading-tight">
                   Based on a {tenure}-month repayment tenure at{" "}
                   <strong className="text-slate-700 dark:text-slate-300">
                     {totalInterestPercentage.toFixed(1)}% total interest

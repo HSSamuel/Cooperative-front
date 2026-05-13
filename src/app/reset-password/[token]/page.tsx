@@ -6,6 +6,7 @@ import Link from "next/link";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function ResetPasswordPage({
   params,
@@ -36,13 +37,15 @@ export default function ResetPasswordPage({
       setTimeout(() => router.push("/login"), 2000);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Invalid or expired token.");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors relative">
+      {/* 🚀 Global Spinner Overlay */}
+      <GlobalSpinner isLoading={isSubmitting} text="Securing new password..." />
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"

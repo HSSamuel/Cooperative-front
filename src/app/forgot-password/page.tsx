@@ -5,6 +5,7 @@ import Link from "next/link";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -25,13 +26,16 @@ export default function ForgotPasswordPage() {
       toast.error(
         error.response?.data?.message || "Failed to process request.",
       );
-    } finally {
-      setIsSubmitting(false);
-    }
+      setIsSubmitting(false); // Only disable loading if it fails, otherwise let it transition
+    } 
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors relative">
+      
+      {/* 🚀 Global Spinner Overlay */}
+      <GlobalSpinner isLoading={isSubmitting} text="Sending Reset Link..." />
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex justify-center">
         <Link
           href="/"
@@ -127,7 +131,7 @@ export default function ForgotPasswordPage() {
                     disabled={isSubmitting}
                     className="w-full flex justify-center py-2.5 px-4 text-sm font-bold text-white bg-[#1b5e3a] hover:bg-[#124228] rounded-sm shadow-sm transition-colors disabled:opacity-70"
                   >
-                    {isSubmitting ? "Sending Link..." : "Send Reset Link"}
+                    {isSubmitting ? "Processing..." : "Send Reset Link"}
                   </button>
                 </div>
               </form>

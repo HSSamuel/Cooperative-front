@@ -16,21 +16,21 @@ export default function MemberDirectoryPage() {
     fetchInitialData();
   }, []);
 
-const fetchInitialData = async () => {
-  try {
-    const [membersRes, loansRes] = await Promise.all([
-      // 🚀 FIX: Increased limit from 50 to 5000 to capture ALL cooperators in the directory
-      apiClient.get("/auth/all-members?page=1&limit=5000"),
-      apiClient.get("/loans/all").catch(() => ({ data: [] })),
-    ]);
-    setMembers(membersRes.data.users || membersRes.data);
-    setAllLoans(loansRes.data);
-  } catch (error) {
-    toast.error("Failed to load member directory.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const fetchInitialData = async () => {
+    try {
+      const [membersRes, loansRes] = await Promise.all([
+        // Fetches up to 5000 to capture ALL cooperators in the directory
+        apiClient.get("/auth/all-members?page=1&limit=5000"),
+        apiClient.get("/loans/all").catch(() => ({ data: [] })),
+      ]);
+      setMembers(membersRes.data.users || membersRes.data);
+      setAllLoans(loansRes.data);
+    } catch (error) {
+      toast.error("Failed to load member directory.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredMembers = members
     .filter((member) => {
@@ -101,51 +101,59 @@ const fetchInitialData = async () => {
                   </td>
                 </tr>
               ) : (
-                filteredMembers.map((member) => (
-                  <tr
-                    key={member._id}
-                    onClick={() => setSelectedMember(member)}
-                    className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 cursor-pointer transition-colors"
-                  >
-                    <td className="py-3 px-4 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-sm bg-[#2B2F42] text-white flex items-center justify-center font-bold text-xs overflow-hidden shadow-sm">
-                        {member.avatarUrl ? (
-                          <img
-                            src={member.avatarUrl}
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          member.lastName?.charAt(0) || "U"
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-800 dark:text-slate-200">
-                          {member.lastName} {member.firstName}{" "}
-                          {member.otherName || ""}
+                filteredMembers.map((member) => {
+                  // Create the Date object for formatting
+                  const dateObj = new Date(
+                    member.dateJoined || member.createdAt,
+                  );
+
+                  return (
+                    <tr
+                      key={member._id}
+                      onClick={() => setSelectedMember(member)}
+                      className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 cursor-pointer transition-colors"
+                    >
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-sm bg-[#2B2F42] text-white flex items-center justify-center font-bold text-xs overflow-hidden shadow-sm">
+                          {member.avatarUrl ? (
+                            <img
+                              src={member.avatarUrl}
+                              alt="Avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            member.lastName?.charAt(0) || "U"
+                          )}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {member.email}
+                        <div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200">
+                            {member.lastName} {member.firstName}{" "}
+                            {member.otherName || ""}
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                            {member.email}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
-                      {member.fileNumber}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider ${member.role.includes("ADMIN") ? "bg-[#2B2F42] text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}
-                      >
-                        {member.role.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
-                      {new Date(
-                        member.dateJoined || member.createdAt,
-                      ).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                        {member.fileNumber}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider ${member.role.includes("ADMIN") ? "bg-[#2B2F42] text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}
+                        >
+                          {member.role.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {/* Beautiful Colored Date Badge */}
+                        <span className="inline-block text-[11px] font-bold text-[#1b5e3a] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded border border-emerald-100 dark:border-emerald-800/30 transition-colors shadow-sm">
+                          {`${dateObj.toLocaleString("en-US", { month: "short" })}/${dateObj.getDate().toString().padStart(2, "0")}/${dateObj.getFullYear()}`}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

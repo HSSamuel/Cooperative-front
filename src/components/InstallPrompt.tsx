@@ -30,8 +30,13 @@ export function InstallPrompt() {
 
   // 2. Trigger or hide the custom toast based on the current route
   useEffect(() => {
-    // Restrict prompt strictly to these routes
-    const allowedPaths = ["/dashboard", "/dashboard/profile"];
+    // Restrict prompt strictly to these routes (Landing and Savings added)
+    const allowedPaths = [
+      "/",
+      "/dashboard",
+      "/dashboard/profile",
+      "/dashboard/savings",
+    ];
     const isAllowed = allowedPaths.includes(pathname);
 
     if (deferredPrompt && isAllowed && !hasShown) {
@@ -42,7 +47,7 @@ export function InstallPrompt() {
           <div
             className={`${
               t.visible ? "animate-enter" : "animate-leave"
-            } max-w-md w-full bg-white dark:bg-[#1B1B25] shadow-2xl rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 border border-emerald-100 dark:border-emerald-900/50`}
+            } max-w-md w-full bg-white dark:bg-[#1B1B25] shadow-2xl rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 border border-emerald-100 dark:border-emerald-900/50 mt-4`}
           >
             <div className="flex-1 w-0 p-4">
               <div className="flex items-start">
@@ -93,7 +98,7 @@ export function InstallPrompt() {
         {
           id: "pwa-install-prompt",
           duration: Infinity,
-          position: "bottom-center",
+          position: "top-center", // Display at the top instead of the bottom
         },
       );
     } else if (!isAllowed) {

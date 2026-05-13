@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { GlobalSpinner } from "@/components/GlobalSpinner";
 
 export default function AdminOverviewPage() {
   const [loans, setLoans] = useState<any[]>([]);
@@ -18,6 +19,9 @@ export default function AdminOverviewPage() {
   const [activeTab, setActiveTab] = useState<
     "PENDING" | "ACTIVE" | "ARCHIVE" | "AUDIT"
   >("PENDING");
+
+  // New state for collapsible groups
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchData();
@@ -165,6 +169,15 @@ export default function AdminOverviewPage() {
     }
   };
 
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const formatNaira = (koboAmount: number) => {
     return new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2 }).format(
       koboAmount / 100,
@@ -206,6 +219,32 @@ export default function AdminOverviewPage() {
     }
   };
 
+  // Group consecutive identical logs by the same admin
+  const groupedLogs: any[] = [];
+  let currentGroup: any = null;
+
+  for (const log of auditLogs) {
+    if (!currentGroup) {
+      currentGroup = { ...log, count: 1, subLogs: [log] };
+    } else {
+      const isSameAdmin =
+        currentGroup.adminId?._id === log.adminId?._id ||
+        currentGroup.adminId?.fileNumber === log.adminId?.fileNumber;
+      const isSameAction = currentGroup.action === log.action;
+
+      if (isSameAdmin && isSameAction) {
+        currentGroup.count += 1;
+        currentGroup.subLogs.push(log);
+      } else {
+        groupedLogs.push(currentGroup);
+        currentGroup = { ...log, count: 1, subLogs: [log] };
+      }
+    }
+  }
+  if (currentGroup) {
+    groupedLogs.push(currentGroup);
+  }
+
   const pendingReviewsCount = loans.filter(
     (l) => l.status === "PENDING_ADMIN",
   ).length;
@@ -239,7 +278,12 @@ export default function AdminOverviewPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse flex flex-col gap-6">
+      <div className="animate-pulse flex flex-col gap-6 relative">
+        {/* 🚀 Initial Data Loading Overlay */}
+        <GlobalSpinner
+          isLoading={true}
+          text="Initializing Admin Dashboard..."
+        />
         <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
         <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-sm"></div>
       </div>
@@ -247,7 +291,13 @@ export default function AdminOverviewPage() {
   }
 
   return (
-    <div className="animate-fade-in-up pb-10">
+    <div className="animate-fade-in-up pb-10 relative">
+      {/* 🚀 Global Spinner for Loan Review Process */}
+      <GlobalSpinner
+        isLoading={processingId !== null}
+        text="Applying Administrative Review..."
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-[#2B2F42] rounded-sm p-6 shadow-sm text-white transition-colors">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
@@ -337,8 +387,8 @@ export default function AdminOverviewPage() {
           </div>
           <h2 className="text-lg font-bold mb-1">Targeted Payouts Active</h2>
           <p className="text-xs text-purple-200 mb-4">
-            Dividends are now distributed individually. Use the Member Directory
-            to credit specific accounts.
+            To distribute dividends individually, use the Member Directory to
+            credit specific accounts.
           </p>
           <Link
             href="/admin/members"
@@ -363,29 +413,29 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="bg-white dark:bg-[#1B1B25] rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm p-6 transition-colors">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4 gap-4">
+          <div className="flex gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 custom-scrollbar">
             <button
               onClick={() => setActiveTab("PENDING")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "PENDING" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all whitespace-nowrap ${activeTab === "PENDING" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Pending
             </button>
             <button
               onClick={() => setActiveTab("ACTIVE")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ACTIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all whitespace-nowrap ${activeTab === "ACTIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Active
             </button>
             <button
               onClick={() => setActiveTab("ARCHIVE")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "ARCHIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all whitespace-nowrap ${activeTab === "ARCHIVE" ? "bg-[#1b5e3a] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Archive
             </button>
             <button
               onClick={() => setActiveTab("AUDIT")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${activeTab === "AUDIT" ? "bg-[#6A5AE0] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all whitespace-nowrap ${activeTab === "AUDIT" ? "bg-[#6A5AE0] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
             >
               Audit Log
             </button>
@@ -413,7 +463,7 @@ export default function AdminOverviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {auditLogs.length === 0 ? (
+                {groupedLogs.length === 0 ? (
                   <tr>
                     <td
                       colSpan={4}
@@ -423,42 +473,105 @@ export default function AdminOverviewPage() {
                     </td>
                   </tr>
                 ) : (
-                  auditLogs.map((log) => {
-                    const dateObj = new Date(log.createdAt);
+                  groupedLogs.map((group) => {
+                    const isExpanded = expandedGroups.has(group._id);
+                    const dateObj = new Date(group.createdAt);
+
                     return (
-                      <tr
-                        key={log._id}
-                        className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors"
-                      >
-                        {/* 🚀 FIX: Formatting to explicitly show May/10/2026 */}
-                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs">
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">
-                            {`${dateObj.toLocaleString("en-US", { month: "short" })}/${dateObj.getDate().toString().padStart(2, "0")}/${dateObj.getFullYear()}`}
-                          </span>
-                          <br />
-                          <span className="text-[10px]">
-                            {dateObj.toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">
-                          {log.adminId?.firstName} {log.adminId?.lastName}{" "}
-                          <br />
-                          <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
-                            {log.adminId?.fileNumber}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 text-[10px] rounded-sm uppercase tracking-wider">
-                            {log.action.replace("_", " ")}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
-                          {log.description}
-                        </td>
-                      </tr>
+                      <React.Fragment key={group._id}>
+                        <tr
+                          className={`border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 transition-colors ${group.count > 1 ? "cursor-pointer" : ""}`}
+                          onClick={() =>
+                            group.count > 1 && toggleGroup(group._id)
+                          }
+                        >
+                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs">
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {`${dateObj.toLocaleString("en-US", { month: "short" })}/${dateObj.getDate().toString().padStart(2, "0")}/${dateObj.getFullYear()}`}
+                            </span>
+                            <br />
+                            <span className="text-[10px]">
+                              {dateObj.toLocaleTimeString("en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">
+                            {group.adminId?.firstName} {group.adminId?.lastName}{" "}
+                            <br />
+                            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+                              {group.adminId?.fileNumber}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 text-[10px] rounded-sm uppercase tracking-wider">
+                                {group.action.replace(/_/g, " ")}
+                              </span>
+                              {group.count > 1 && (
+                                <span className="bg-[#1b5e3a]/10 text-[#1b5e3a] dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                                  {group.count} times
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="truncate max-w-xs sm:max-w-md">
+                                {group.description}
+                              </span>
+                              {group.count > 1 && (
+                                <svg
+                                  className={`w-4 h-4 transform transition-transform text-slate-400 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Collapsible Dropdown for duplicates */}
+                        {isExpanded && group.count > 1 && (
+                          <tr className="bg-slate-50/50 dark:bg-[#12121A]/30 border-b border-slate-100 dark:border-slate-800/50">
+                            <td colSpan={4} className="p-0">
+                              <div className="max-h-60 overflow-y-auto custom-scrollbar px-4 py-2">
+                                {group.subLogs.map((sub: any) => {
+                                  const subDate = new Date(sub.createdAt);
+                                  return (
+                                    <div
+                                      key={sub._id}
+                                      className="flex justify-between items-center text-[11px] py-2 border-b border-slate-100 dark:border-slate-700/50 last:border-0"
+                                    >
+                                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                                        {subDate.toLocaleTimeString("en-US", {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          second: "2-digit",
+                                        })}{" "}
+                                        -{" "}
+                                        {`${subDate.toLocaleString("en-US", { month: "short" })}/${subDate.getDate().toString().padStart(2, "0")}/${subDate.getFullYear()}`}
+                                      </span>
+                                      <span className="text-slate-600 dark:text-slate-300 truncate text-right">
+                                        {sub.description}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })
                 )}
@@ -511,14 +624,14 @@ export default function AdminOverviewPage() {
                             <button
                               onClick={() => handleReview(loan._id, "APPROVED")}
                               disabled={processingId === loan._id}
-                              className="bg-[#20C997] text-white px-3 py-1 text-xs rounded-sm hover:opacity-90"
+                              className="bg-[#20C997] text-white px-3 py-1 text-xs rounded-sm hover:opacity-90 disabled:opacity-50"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleReview(loan._id, "REJECTED")}
                               disabled={processingId === loan._id}
-                              className="bg-red-500 text-white px-3 py-1 text-xs rounded-sm hover:opacity-90"
+                              className="bg-red-500 text-white px-3 py-1 text-xs rounded-sm hover:opacity-90 disabled:opacity-50"
                             >
                               Reject
                             </button>
