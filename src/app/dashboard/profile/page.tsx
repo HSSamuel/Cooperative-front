@@ -23,7 +23,6 @@ export default function ProfileBioDataPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
 
-  // New States for local preview and file handling
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -49,19 +48,19 @@ export default function ProfileBioDataPage() {
     return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}`;
   };
 
-const currentMonthString = new Date().toLocaleString("en-GB", {
-  month: "long",
-  year: "numeric",
-});
+  const currentMonthString = new Date().toLocaleString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
 
-const currentMonthSavings = transactions
-  .filter(
-    (txn: any) =>
-      txn.type === "CREDIT" &&
-      txn.effectiveMonth === currentMonthString &&
-      !txn.description?.toLowerCase().includes("dividend"), 
-  )
-  .reduce((sum: number, txn: any) => sum + txn.amount, 0);
+  const currentMonthSavings = transactions
+    .filter(
+      (txn: any) =>
+        txn.type === "CREDIT" &&
+        txn.effectiveMonth === currentMonthString &&
+        !txn.description?.toLowerCase().includes("dividend"),
+    )
+    .reduce((sum: number, txn: any) => sum + txn.amount, 0);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,13 +80,10 @@ const currentMonthSavings = transactions
     try {
       let finalAvatarUrl = editForm.avatarUrl;
 
-      // Only upload to Cloudinary if a new file was actually selected
       if (selectedFile) {
         setIsUploadingImage(true);
-        // 1. Get the secure signature from our Node backend
         const { data: sigData } = await apiClient.get("/upload/signature");
 
-        // 2. Prepare payload for Cloudinary
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("api_key", sigData.apiKey);
@@ -95,7 +91,6 @@ const currentMonthSavings = transactions
         formData.append("signature", sigData.signature);
         formData.append("folder", "ascon_coop_avatars");
 
-        // 3. Upload DIRECTLY to Cloudinary
         const cloudRes = await axios.post(
           `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
           formData,
@@ -104,7 +99,6 @@ const currentMonthSavings = transactions
         setIsUploadingImage(false);
       }
 
-      // Submit the profile update with the final URL
       const res = await apiClient.put("/auth/profile", {
         ...editForm,
         avatarUrl: finalAvatarUrl,
@@ -114,7 +108,6 @@ const currentMonthSavings = transactions
       setUser(res.data);
       toast.success("Bio Data updated successfully!");
 
-      // Clean up states after successful save
       setIsEditModalOpen(false);
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -130,7 +123,7 @@ const currentMonthSavings = transactions
     setIsEditModalOpen(false);
     setSelectedFile(null);
     setPreviewUrl(null);
-    setEditForm(user); // Reset form to current user data
+    setEditForm(user);
   };
 
   if (status === "loading" || status === "idle" || !user) {
@@ -147,17 +140,16 @@ const currentMonthSavings = transactions
 
   return (
     <div className="animate-fade-in-up pb-10 relative">
-      
-      {/* 🚀 Global Spinner Overlay */}
-      <GlobalSpinner 
-        isLoading={isSaving || isUploadingImage} 
-        text={isUploadingImage ? "Uploading Photo..." : "Updating Profile Data..."} 
+      <GlobalSpinner
+        isLoading={isSaving || isUploadingImage}
+        text={
+          isUploadingImage ? "Uploading Photo..." : "Updating Profile Data..."
+        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: PROFILE CARD */}
         <div className="lg:col-span-4 flex flex-col shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1B1B25] rounded-sm overflow-hidden lg:sticky lg:top-6 transition-colors">
-          <div className="bg-gradient-to-b from-[#1b5e3a] to-[#0f3420] dark:from-[#114026] dark:to-[#092214] pt-10 pb-8 px-6 flex flex-col items-center text-center text-white relative transition-colors">
+          <div className="bg-gradient-to-b from-[#1b5e3a] to-[#0f3420] dark:from-[#114026] dark:to-[#092214] pt-10 pb-8 px-4 sm:px-6 flex flex-col items-center text-center text-white relative transition-colors">
             <div className="absolute inset-0 opacity-10 pointer-events-none">
               <svg
                 width="100%"
@@ -183,7 +175,7 @@ const currentMonthSavings = transactions
               </svg>
             </div>
 
-            <div className="relative z-10 w-28 h-28 rounded-full border-4 border-white/20 overflow-hidden mb-4 bg-slate-700 flex items-center justify-center text-4xl font-bold shadow-lg">
+            <div className="relative z-10 w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/20 overflow-hidden mb-4 bg-slate-700 flex items-center justify-center text-3xl sm:text-4xl font-bold shadow-lg">
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -195,23 +187,24 @@ const currentMonthSavings = transactions
               )}
             </div>
 
-            <h2 className="relative z-10 text-2xl font-bold tracking-wide mb-1 text-center">
+            {/* 🚀 FIXED: Dynamic font scaling, break-words, and removed truncate so it never hides content */}
+            <h2 className="relative z-10 text-lg sm:text-xl md:text-2xl font-bold tracking-wide mb-1 text-center w-full px-2 break-words leading-tight">
               {user.firstName} {user.otherName ? `${user.otherName} ` : ""}
               {user.lastName}
             </h2>
 
-            <p className="relative z-10 text-sm text-emerald-100/70 mb-2 truncate max-w-full">
+            <p className="relative z-10 text-xs sm:text-sm text-emerald-100/70 mb-4 px-2 break-all sm:break-words">
               {user.email}
             </p>
             <div className="relative z-10 bg-white/10 px-4 py-2 rounded-full border border-white/20 mb-4 backdrop-blur-sm shadow-sm">
               <p className="text-[10px] text-emerald-100/70 uppercase tracking-wider mb-0.5">
                 Membership No
               </p>
-              <p className="font-bold text-base text-white tracking-widest">
+              <p className="font-bold text-sm sm:text-base text-white tracking-widest">
                 {user.fileNumber}
               </p>
             </div>
-            <span className="relative z-10 px-5 py-1.5 bg-[#20C997] text-white text-xs font-bold rounded-sm uppercase tracking-wider shadow-sm">
+            <span className="relative z-10 px-5 py-1.5 bg-[#20C997] text-white text-[10px] sm:text-xs font-bold rounded-sm uppercase tracking-wider shadow-sm">
               Active Member
             </span>
           </div>
@@ -219,7 +212,7 @@ const currentMonthSavings = transactions
           <div className="flex flex-col bg-white dark:bg-[#1B1B25] transition-colors">
             <Link
               href="/dashboard"
-              className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 flex items-center gap-3 transition-colors"
+              className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 flex items-center gap-3 transition-colors text-sm sm:text-base"
             >
               <svg
                 className="w-5 h-5 text-slate-400 dark:text-slate-500"
@@ -238,7 +231,7 @@ const currentMonthSavings = transactions
             </Link>
             <Link
               href="/dashboard/savings"
-              className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 flex items-center gap-3 transition-colors"
+              className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#12121A]/50 flex items-center gap-3 transition-colors text-sm sm:text-base"
             >
               <svg
                 className="w-5 h-5 text-slate-400 dark:text-slate-500"
@@ -255,7 +248,7 @@ const currentMonthSavings = transactions
               </svg>
               Savings & Withdrawals
             </Link>
-            <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/20 border-l-4 border-[#1b5e3a] dark:border-emerald-500 font-bold text-[#1b5e3a] dark:text-emerald-400 flex items-center gap-3">
+            <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/20 border-l-4 border-[#1b5e3a] dark:border-emerald-500 font-bold text-[#1b5e3a] dark:text-emerald-400 flex items-center gap-3 text-sm sm:text-base">
               <svg
                 className="w-5 h-5 text-[#1b5e3a] dark:text-emerald-400"
                 fill="none"
@@ -274,7 +267,6 @@ const currentMonthSavings = transactions
           </div>
         </div>
 
-        {/* RIGHT COLUMN */}
         <div className="lg:col-span-8 flex flex-col gap-6">
           <div className="bg-white dark:bg-[#1B1B25] rounded-sm grid grid-cols-1 sm:grid-cols-3 gap-0 border border-slate-200 dark:border-slate-800 shadow-sm divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 transition-colors">
             <div className="p-6 flex flex-col items-center justify-center text-center">

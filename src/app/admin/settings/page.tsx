@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
 import { GlobalSpinner } from "@/components/GlobalSpinner";
@@ -352,24 +352,25 @@ export default function SystemSettingsPage() {
                             group.count > 1 && toggleGroup(group._id)
                           }
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-start gap-2">
-                              <div>
-                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          {/* 🚀 FIXED: Added min-w-0 and flex-1 so the name truncates safely on mobile screens */}
+                          <div className="flex justify-between items-start mb-2 gap-3">
+                            <div className="flex items-start gap-2 min-w-0 flex-1">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
                                   {group.adminId?.firstName}{" "}
                                   {group.adminId?.lastName}
                                 </p>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                                   {group.adminId?.fileNumber}
                                 </p>
                               </div>
                               {group.count > 1 && (
-                                <span className="bg-[#1b5e3a]/10 text-[#1b5e3a] dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap mt-0.5">
+                                <span className="bg-[#1b5e3a]/10 text-[#1b5e3a] dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap mt-0.5 flex-shrink-0">
                                   {group.count} times
                                 </span>
                               )}
                             </div>
-                            <div className="flex flex-col items-end">
+                            <div className="flex flex-col items-end flex-shrink-0">
                               <span className="text-[10px] text-slate-400 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-slate-800 px-2 py-1 rounded shadow-sm">
                                 {`${dateObj.toLocaleString("en-US", { month: "short" })}/${dateObj.getDate().toString().padStart(2, "0")}/${dateObj.getFullYear()}`}
                               </span>

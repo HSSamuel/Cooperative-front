@@ -9,6 +9,11 @@ import { useDispatch } from "react-redux";
 import { fetchFinancialData } from "@/store/financeSlice";
 import type { AppDispatch } from "@/store";
 import { GlobalSpinner } from "@/components/GlobalSpinner";
+import {
+  formatNaira,
+  calculateLoanInterestKobo,
+  calculateMonthlyDeductionKobo,
+} from "@/utils/financeUtils";
 
 export default function ApplyForLoanPage() {
   const router = useRouter();
@@ -51,7 +56,6 @@ export default function ApplyForLoanPage() {
           fetchedSettings.loanTenures.length > 0
         ) {
           setAllowedTenures(fetchedSettings.loanTenures);
-          // Set default tenure if current is not in the list
           if (!fetchedSettings.loanTenures.includes(tenure)) {
             setTenure(fetchedSettings.loanTenures[0]);
           }
@@ -65,24 +69,22 @@ export default function ApplyForLoanPage() {
     };
 
     fetchData();
-  }, []); // Only run once on mount
+  }, []);
 
-  const formatNaira = (amountInKobo: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amountInKobo / 100);
-  };
-
+  // 🚀 Replaced manual math with centralized utils
   const requestedValueKobo = Math.round(
     (parseFloat(amountRequested) || 0) * 100,
   );
-  const totalInterestPercentage = interestRate;
-  const interestAmountKobo = Math.round(
-    requestedValueKobo * (totalInterestPercentage / 100),
+
+  const interestAmountKobo = calculateLoanInterestKobo(
+    requestedValueKobo,
+    interestRate,
+    tenure,
   );
+
   const totalDueKobo = requestedValueKobo + interestAmountKobo;
-  const monthlyDeduction = totalDueKobo / tenure;
+  const monthlyDeduction = calculateMonthlyDeductionKobo(totalDueKobo, tenure);
+  const totalInterestPercentage = interestRate * (tenure / 10);
 
   const isOverLimit = requestedValueKobo > creditLimit;
 
@@ -119,7 +121,7 @@ export default function ApplyForLoanPage() {
       toast.error(
         error.response?.data?.message || "Failed to submit application.",
       );
-      setIsSubmitting(false); // Only toggle if failed to allow global overlay to hold during redirect
+      setIsSubmitting(false);
     }
   };
 
@@ -134,7 +136,6 @@ export default function ApplyForLoanPage() {
 
   return (
     <div className="animate-fade-in-up pb-10 relative">
-      {/* 🚀 Global Spinner Overlay */}
       <GlobalSpinner
         isLoading={isSubmitting}
         text="Submitting application..."

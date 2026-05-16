@@ -7,7 +7,6 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🚀 FIX: Await the cookies() function
   const cookieStore = await cookies();
   const token = cookieStore.get("coop_token")?.value;
 
@@ -17,8 +16,11 @@ export default async function DashboardLayout({
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+  let initialAccount, initialLoans, initialTransactions;
+  let isMaintenance = false;
+  let isUnauthorized = false;
+
   try {
-    // Fetch all the required data for Redux state securely on the server
     const [accountRes, loansRes, txnRes] = await Promise.all([
       fetch(`${apiUrl}/account/my-account`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -34,22 +36,35 @@ export default async function DashboardLayout({
       }),
     ]);
 
-    if (!accountRes.ok) throw new Error("Unauthorized");
-
-    const initialAccount = await accountRes.json();
-    const initialLoans = await loansRes.json();
-    const initialTransactions = await txnRes.json();
-
-    return (
-      <DashboardClientLayout
-        initialAccount={initialAccount}
-        initialLoans={initialLoans}
-        initialTransactions={initialTransactions}
-      >
-        {children}
-      </DashboardClientLayout>
-    );
+    // 🚀 FIX: Avoid throwing errors inside the block. Check status carefully.
+    if (accountRes.status === 503) {
+      isMaintenance = true;
+    } else if (!accountRes.ok) {
+      isUnauthorized = true;
+    } else {
+      initialAccount = await accountRes.json();
+      initialLoans = await loansRes.json();
+      initialTransactions = await txnRes.json();
+    }
   } catch (error) {
-    redirect("/login");
+    isUnauthorized = true;
   }
+
+  // 🚀 FIX: Safely trigger Next.js redirects OUTSIDE of try-catch blocks
+  if (isMaintenance) {
+    redirect("/login?clear=true&reason=maintenance");
+  }
+  if (isUnauthorized) {
+    redirect("/login?clear=true");
+  }
+
+  return (
+    <DashboardClientLayout
+      initialAccount={initialAccount}
+      initialLoans={initialLoans}
+      initialTransactions={initialTransactions}
+    >
+      {children}
+    </DashboardClientLayout>
+  );
 }

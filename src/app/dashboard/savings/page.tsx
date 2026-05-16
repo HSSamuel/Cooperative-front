@@ -394,7 +394,7 @@ export default function SavingsPage() {
                 </h3>
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-xs font-medium ml-11">
-                Total debit/ withdrawal
+                Total debit/withdrawal
               </p>
             </div>
           </div>

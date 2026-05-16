@@ -8,7 +8,6 @@ const apiClient = axios.create({
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
-// Helper to process paused requests once the token is refreshed
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -37,8 +36,12 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 1. Zod Validation Error Handling
-    if (error.response?.status === 400 && error.response.data?.errors) {
+    // 🚀 FIX: Safer Extraction of Zod Validation Errors
+    if (
+      error.response?.status === 400 &&
+      Array.isArray(error.response.data?.errors) &&
+      error.response.data.errors.length > 0
+    ) {
       error.response.data.message = error.response.data.errors[0];
     }
 
@@ -50,7 +53,6 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // If a refresh is already happening, queue this request until it finishes
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -65,7 +67,6 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Silently request a new access token
         const { data } = await axios.post(
           `${apiClient.defaults.baseURL}/auth/refresh`,
           {},
@@ -76,7 +77,6 @@ apiClient.interceptors.response.use(
           localStorage.setItem("coop_token_raw", data.token);
         }
 
-        // Apply new token to the original failed request
         originalRequest.headers.Authorization = `Bearer ${data.token}`;
 
         processQueue(null, data.token);
@@ -93,7 +93,6 @@ apiClient.interceptors.response.use(
   },
 );
 
-// Utility to completely wipe the session if the refresh token is dead
 const handleHardLogout = (error: any) => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("coop_user");

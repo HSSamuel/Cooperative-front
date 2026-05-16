@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import apiClient from "@/lib/axios";
 import toast from "react-hot-toast";
@@ -22,6 +22,29 @@ function LoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // 🚀 FIX: Detect if we were forcefully logged out via the URL parameter
+  useEffect(() => {
+    const clear = searchParams.get("clear");
+    const reason = searchParams.get("reason");
+
+    if (clear === "true") {
+      localStorage.removeItem("coop_user");
+      localStorage.removeItem("coop_token_raw");
+
+      if (reason === "maintenance") {
+        toast.error("System is under maintenance. Please try again later.", {
+          id: "maintenance-toast",
+        });
+      } else {
+        toast.error("Your session has expired. Please log in again.", {
+          id: "expired-toast",
+        });
+      }
+
+      router.replace("/login"); // Clean up the URL bar
+    }
+  }, [searchParams, router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -40,7 +63,6 @@ function LoginForm({
         return;
       }
 
-      // ISOLATE Server Action: Prevent local network quirks from crashing login
       try {
         await syncAuthCookie(token);
       } catch (syncErr) {
@@ -67,7 +89,7 @@ function LoginForm({
       toast.error(
         err.response?.data?.message || err.message || "Invalid credentials.",
       );
-      setIsLoading(false); // Only disable loading if it fails. If success, let it spin until redirect finishes.
+      setIsLoading(false);
     }
   };
 
@@ -170,14 +192,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fe] dark:bg-[#12121A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors relative">
-      {/* 🚀 Global Logo Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/70 dark:bg-[#12121A]/80 backdrop-blur-sm transition-all duration-300">
           <div className="relative flex items-center justify-center w-24 h-24">
-            {/* Outer spinning track for a sleek tech effect */}
             <div className="absolute inset-0 rounded-full border-4 border-emerald-100/50 dark:border-emerald-900/30 border-t-[#1b5e3a] dark:border-t-emerald-400 animate-spin"></div>
-
-            {/* The ASCON Logo (Rolling) */}
             <img
               src="/ascon-logo.png"
               alt="Authenticating..."
@@ -227,7 +245,6 @@ export default function LoginPage() {
               </div>
             }
           >
-            {/* We pass the loading state up to the parent page so it can trigger the global overlay */}
             <LoginForm isLoading={isLoading} setIsLoading={setIsLoading} />
           </Suspense>
 
