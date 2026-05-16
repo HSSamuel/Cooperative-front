@@ -226,7 +226,7 @@ export default function LoginPage() {
               ASCON
             </span>
             <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#1b5e3a] dark:text-emerald-400 leading-tight">
-              Co-operative
+              Cooperative
             </span>
           </div>
         </Link>
